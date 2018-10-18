@@ -11,10 +11,10 @@ import java.math.BigDecimal;
 public interface TransactionMapper {
 
     String SELECT_BALANCE_EXCHANGE_CURRENCY =
-            "SELECT `balance_after_transaction` FROM `komodoDB`.`transaction_log` " +
-                    "WHERE `exchange_id` = #{args0}, `currency_id` = #{args1} ORDER BY `transaction_id` DESC LIMIT = 1";
+            "SELECT `balance_after_transaction` FROM `komodo_crypto`.`transaction_log` " +
+                    "WHERE `exchange_id` = #{arg0}, `currency_id` = #{arg1} ORDER BY `transaction_id` DESC LIMIT = 1";
 
-    String INSERT_TRANSACTION = "INSERT INTO `komodoDB`.`transaction_log` " +
+    String INSERT_TRANSACTION = "INSERT INTO `komodo_crypto`.`transaction_log` " +
             "(`exchange_id`, `currency_pair_id`, `transaction_type`, `transaction_amount`, `transaction_fee`, " +
             "`balance_before_transaction`, `algorithm`) VALUES " +
             "(#{exchange_id}, #{currency_pair_id}, #{transaction_type}, #{transaction_amount}, #{transaction_fee}, " +

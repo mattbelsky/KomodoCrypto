@@ -37,8 +37,8 @@ public class KomodoCryptoApplication /*extends SpringBootServletInitializer*/ {
 		return threadPoolTaskExecutor;
 	}
 
-//	@Override
-//	protected SpringApplicationBuilder configure (SpringApplicationBuilder application){
-//		return application.sources(komodocrypto.KomodoCryptoApplication.class);
-//	}
+	/*@Override
+	protected SpringApplicationBuilder configure (SpringApplicationBuilder application){
+		return application.sources(komodocrypto.KomodoCryptoApplication.class);
+	}*/
 }

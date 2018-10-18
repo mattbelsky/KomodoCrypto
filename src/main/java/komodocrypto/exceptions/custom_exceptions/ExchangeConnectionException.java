@@ -3,7 +3,7 @@ package komodocrypto.exceptions.custom_exceptions;
 import org.springframework.http.HttpStatus;
 
 /**
- * Exception thrown when unable to connect to the Exchange
+ * Exception thrown when unable to connect to the ExchangeData
  */
 public class ExchangeConnectionException extends Exception {
 

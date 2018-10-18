@@ -32,9 +32,9 @@ public class TradeController {
     /**
      * [POST] Arbitrage trade endpoint
      */
-    @PostMapping("/arbitrage")
-    public ArbitrageOutput makeArbitrageTrade(@RequestBody String exchangeHigh, String exchangeLow,
-                                              String currencyPair, BigDecimal amount) throws ExchangeConnectionException {
-        return arbitrageTradingService.makeMarketTrade(exchangeHigh,exchangeLow,currencyPair,amount);
-    }
+//    @PostMapping("/arbitrage")
+//    public ArbitrageOutput makeArbitrageTrade(@RequestBody String exchangeHigh, String exchangeLow,
+//                                              String currencyPair, BigDecimal amount) throws ExchangeConnectionException {
+//        return arbitrageTradingService.makeMarketTrade(exchangeHigh,exchangeLow,currencyPair,amount);
+//    }
 }

@@ -5,38 +5,38 @@ import java.sql.Timestamp;
 
 public class GroupPortfolio {
 
-    int group_portfolio_id;
-    BigDecimal deposit_value;
-    BigDecimal current_value;
-    int num_investors;
+    int id;
+    BigDecimal depositValue;
+    BigDecimal currentValue;
+    int numInvestors;
     Timestamp timestamp;
 
-    public int getGroup_portfolio_id() {
-        return group_portfolio_id;
+    public int getId() {
+        return id;
     }
 
-    public BigDecimal getDeposit_value() {
-        return deposit_value;
+    public BigDecimal getDepositValue() {
+        return depositValue;
     }
 
-    public void setDeposit_value(BigDecimal deposit_value) {
-        this.deposit_value = deposit_value;
+    public void setDepositValue(BigDecimal depositValue) {
+        this.depositValue = depositValue;
     }
 
-    public BigDecimal getCurrent_value() {
-        return current_value;
+    public BigDecimal getCurrentValue() {
+        return currentValue;
     }
 
-    public void setCurrent_value(BigDecimal current_value) {
-        this.current_value = current_value;
+    public void setCurrentValue(BigDecimal currentValue) {
+        this.currentValue = currentValue;
     }
 
-    public int getNum_investors() {
-        return num_investors;
+    public int getNumInvestors() {
+        return numInvestors;
     }
 
-    public void setNum_investors(int num_investors) {
-        this.num_investors = num_investors;
+    public void setNumInvestors(int numInvestors) {
+        this.numInvestors = numInvestors;
     }
 
     public Timestamp getTimestamp() {

@@ -10,13 +10,13 @@ import java.util.ArrayList;
 @Mapper
 public interface SignalMapper {
 
-    @Insert("INSERT INTO `komodoDB`.`buy_sell_signals` " +
+    @Insert("INSERT INTO `komodo_crypto`.`buy_sell_signals` " +
             "(`description`, `time`, `fromCurrency`, `toCurrency`, `sell_neutral_buy`) " +
             "VALUES (#{description}, #{time}, #{fromCurrency}, #{toCurrency}, #{sell_neutral_buy}); ")
     public boolean insertSignal(Signal signal);
 
 
-    @Select("SELECT * FROM `komodoDB`.`buy_sell_signals` WHERE `time` >= #{arg1} ; ")
+    @Select("SELECT * FROM `komodo_crypto`.`buy_sell_signals` WHERE `time` >= #{arg1} ; ")
     public ArrayList<Signal> getRecentSignals(long time);
 
 

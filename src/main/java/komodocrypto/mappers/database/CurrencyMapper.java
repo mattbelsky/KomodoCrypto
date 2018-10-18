@@ -6,8 +6,6 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface CurrencyMapper {
 
-    String SELECT_ID_BY_SYMBOL = "SELECT `currency_id` from `komodoDB`.`currency` WHERE `symbol` = #{symbol};";
-
-    @Select(SELECT_ID_BY_SYMBOL)
+    @Select("SELECT `currency_id` from `komodo_crypto`.`currency` WHERE `symbol` = #{symbol};")
     public int getIdBySymbol(String symbol);
 }

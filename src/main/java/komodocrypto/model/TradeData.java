@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 // speeds up the application.
 public class TradeData {
 
-    // Exchange data
+    // ExchangeData data
     Exchange fromExchange;
     Exchange toExchange;
     int idFromExchange;

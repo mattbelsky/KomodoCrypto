@@ -5,127 +5,137 @@ import komodocrypto.model.cryptocompare.social_stats.Facebook;
 import komodocrypto.model.cryptocompare.social_stats.Reddit;
 import komodocrypto.model.cryptocompare.social_stats.Twitter;
 import org.apache.ibatis.annotations.*;
+import org.springframework.beans.factory.annotation.Value;
 
 @Mapper
 public interface CryptoMapper {
 
+    String dbName = "komodo_crypto";
+
     String fieldsValuesPeriodData =
             "(`time`, `fromCurrency`, `toCurrency`, `exchange`, `open`, `low`, `high`, `close`, `average`, `volumeFrom`, `volumeTo`) " +
-            "VALUES (#{time}, #{fromCurrency}, #{toCurrency}, #{exchange}, #{open}, #{low}, #{high}, #{close}, #{average}, #{volumeFrom}, #{volumeTo}) " +
-            "LIMIT 50;";
+            "VALUES (#{time}, #{fromCurrency}, #{toCurrency}, #{exchange}, #{open}, #{low}, #{high}, #{close}, #{average}, #{volumeFrom}, #{volumeTo});";
 
-    String INSERT_PRICE_DAILY = "INSERT IGNORE INTO `komodoDB`.`daily` " + fieldsValuesPeriodData;
-    String INSERT_PRICE_HOURLY = "INSERT IGNORE INTO `komodoDB`.`hourly` " + fieldsValuesPeriodData;
-    String INSERT_PRICE_MINUTELY = "INSERT IGNORE INTO `komodoDB`.`minutely` " + fieldsValuesPeriodData;
+    String INSERT_PRICE_DAILY = "INSERT IGNORE INTO `komodo_crypto`.`daily` " + fieldsValuesPeriodData;
+    String INSERT_PRICE_HOURLY = "INSERT IGNORE INTO `komodo_crypto`.`hourly` " + fieldsValuesPeriodData;
+    String INSERT_PRICE_MINUTELY = "INSERT IGNORE INTO `komodo_crypto`.`minutely` " + fieldsValuesPeriodData;
 
-    String SELECT_PRICE_DAILY = "SELECT * FROM komodoDB.daily;";
-    String SELECT_PRICE_HOURLY = "SELECT * FROM komodoDB.hourly;";
-    String SELECT_PRICE_MINUTELY = "SELECT * FROM komodoDB.minutely;";
+    String SELECT_PRICE_DAILY = "SELECT * FROM komodo_crypto.daily;";
+    String SELECT_PRICE_HOURLY = "SELECT * FROM komodo_crypto.hourly;";
+    String SELECT_PRICE_MINUTELY = "SELECT * FROM komodo_crypto.minutely;";
 
-    String SELECT_PRICE_DAILY_CONDITIONAL = "SELECT * FROM `komodoDB`.`daily` " +
+    String SELECT_PRICE_DAILY_CONDITIONAL = "SELECT * FROM `komodo_crypto`.`daily` " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3};";
-    String SELECT_PRICE_HOURLY_CONDITIONAL = "SELECT * FROM `komodoDB`.`hourly` " +
+    String SELECT_PRICE_HOURLY_CONDITIONAL = "SELECT * FROM `komodo_crypto`.`hourly` " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3};";
-    String SELECT_PRICE_MINUTELY_CONDITIONAL = "SELECT * FROM `komodoDB`.`minutely` " +
+    String SELECT_PRICE_MINUTELY_CONDITIONAL = "SELECT * FROM `komodo_crypto`.`minutely` " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3};";
 
-    String SELECT_DATA_BY_CURRENCY = "SELECT * FROM komodoDB.daily WHERE fromCurrency = #{currency} " +
-            "UNION SELECT * FROM komodoDB.hourly WHERE fromCurrency = #{currency} " +
-            "UNION SELECT * FROM komodoDB.minutely WHERE fromCurrency = #{currency};";
-    String SELECT_DATA_BY_EXCHANGE = "SELECT * FROM komodoDB.daily WHERE exchange = #{exchange} " +
-            "UNION SELECT * FROM komodoDB.hourly WHERE exchange = #{exchange} " +
-            "UNION SELECT * FROM komodoDB.minutely WHERE exchange = #{exchange};";
-    String SELECT_DATA_DAILY_BY_CURRENCY = "SELECT * FROM komodoDB.daily WHERE fromCurrency = #{currency};";
-    String SELECT_DATA_HOURLY_BY_CURRENCY = "SELECT * FROM komodoDB.hourly WHERE fromCurrency = #{currency};";
-    String SELECT_DATA_MINUTELY_BY_CURRENCY = "SELECT * FROM komodoDB.minutely WHERE fromCurrency = #{currency};";
-    String SELECT_DATA_DAILY_BY_EXCHANGE = "SELECT * FROM komodoDB.daily WHERE exchange = #{exchange};";
-    String SELECT_DATA_HOURLY_BY_EXCHANGE = "SELECT * FROM komodoDB.hourly WHERE exchange = #{exchange};";
-    String SELECT_DATA_MINUTELY_BY_EXCHANGE = "SELECT * FROM komodoDB.minutely WHERE exchange = #{exchange};";
-    String SELECT_DATA_BY_CURRENCY_AND_EXCHANGE = "SELECT * FROM komodoDB.daily WHERE fromCurrency = #{arg0} AND exchange = #{arg1} " +
-            "UNION SELECT * FROM komodoDB.hourly WHERE fromCurrency = #{arg0} AND exchange = #{arg1}" +
-            "UNION SELECT * FROM komodoDB.minutely WHERE fromCurrency = #{arg0} AND exchange = #{arg1};";
+    String SELECT_DATA_BY_CURRENCY = "SELECT * FROM komodo_crypto.daily WHERE fromCurrency = #{currency} " +
+            "UNION SELECT * FROM komodo_crypto.hourly WHERE fromCurrency = #{currency} " +
+            "UNION SELECT * FROM komodo_crypto.minutely WHERE fromCurrency = #{currency};";
+    String SELECT_DATA_BY_EXCHANGE = "SELECT * FROM komodo_crypto.daily WHERE exchange = #{exchange} " +
+            "UNION SELECT * FROM komodo_crypto.hourly WHERE exchange = #{exchange} " +
+            "UNION SELECT * FROM komodo_crypto.minutely WHERE exchange = #{exchange};";
+    String SELECT_DATA_DAILY_BY_CURRENCY = "SELECT * FROM komodo_crypto.daily WHERE fromCurrency = #{currency};";
+    String SELECT_DATA_HOURLY_BY_CURRENCY = "SELECT * FROM komodo_crypto.hourly WHERE fromCurrency = #{currency};";
+    String SELECT_DATA_MINUTELY_BY_CURRENCY = "SELECT * FROM komodo_crypto.minutely WHERE fromCurrency = #{currency};";
+    String SELECT_DATA_DAILY_BY_EXCHANGE = "SELECT * FROM komodo_crypto.daily WHERE exchange = #{exchange};";
+    String SELECT_DATA_HOURLY_BY_EXCHANGE = "SELECT * FROM komodo_crypto.hourly WHERE exchange = #{exchange};";
+    String SELECT_DATA_MINUTELY_BY_EXCHANGE = "SELECT * FROM komodo_crypto.minutely WHERE exchange = #{exchange};";
+    String SELECT_DATA_BY_CURRENCY_AND_EXCHANGE = "SELECT * FROM komodo_crypto.daily WHERE fromCurrency = #{arg0} AND exchange = #{arg1} " +
+            "UNION SELECT * FROM komodo_crypto.hourly WHERE fromCurrency = #{arg0} AND exchange = #{arg1}" +
+            "UNION SELECT * FROM komodo_crypto.minutely WHERE fromCurrency = #{arg0} AND exchange = #{arg1};";
 
 
-    String SELECT_DATA_DAILY_BY_PAIR_SORTED = "SELECT * FROM komodoDB.daily WHERE fromCurrency = #{arg0} AND toCurrency= #{arg1} " +
+    String SELECT_DATA_DAILY_BY_PAIR_SORTED = "SELECT * FROM komodo_crypto.daily WHERE fromCurrency = #{arg0} AND toCurrency= #{arg1} " +
                                               "GROUP BY time ORDER BY time ASC ;";
 
-    String SELECT_MISSING_DAILY_BINANCE = "SELECT * FROM `komodoDB`.`daily` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
+    String SELECT_MISSING_DAILY_BINANCE = "SELECT * FROM `komodo_crypto`.`daily` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
             "`high` = 0.0 AND `low` = 0.0 AND `exchange` = 'Binance' ORDER BY `time` DESC;";
-    String SELECT_MISSING_HOURLY_BINANCE = "SELECT * FROM `komodoDB`.`hourly` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
+    String SELECT_MISSING_HOURLY_BINANCE = "SELECT * FROM `komodo_crypto`.`hourly` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
             "`high` = 0.0 AND `low` = 0.0 AND `exchange` = 'Binance' ORDER BY `time` DESC;";
-    String SELECT_MISSING_MINUTELY_BINANCE = "SELECT * FROM `komodoDB`.`minutely` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
+    String SELECT_MISSING_MINUTELY_BINANCE = "SELECT * FROM `komodo_crypto`.`minutely` WHERE `open` = 0.0 AND `close` = 0.0 AND " +
             "`high` = 0.0 AND `low` = 0.0 AND `exchange` = 'Binance' ORDER BY `time` DESC;";
 
-    String UPDATE_DATA_DAILY = "UPDATE `komodoDB`.`daily` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
+    String UPDATE_DATA_DAILY = "UPDATE `komodo_crypto`.`daily` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
             "`close` = #{close}, `average` = #{average} WHERE `time` = #{arg0};";
-    String UPDATE_DATA_HOURLY = "UPDATE `komodoDB`.`hourly` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
+    String UPDATE_DATA_HOURLY = "UPDATE `komodo_crypto`.`hourly` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
             "`close` = #{close}, `average` = #{average} WHERE `time` = #{arg0};";
-    String UPDATE_DATA_MINUTELY = "UPDATE `komodoDB`.`minutely` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
+    String UPDATE_DATA_MINUTELY = "UPDATE `komodo_crypto`.`minutely` SET `open` = #{open}, `low` = #{low}, `high` = #{high}, " +
             "`close` = #{close}, `average` = #{average} WHERE `time` = #{arg0};";
 
-    String SELECT_TIME_DAILY = "SELECT time FROM komodoDB.daily " +
+    String SELECT_TIME_DAILY = "SELECT time FROM komodo_crypto.daily " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3} " +
             "ORDER BY time ASC;";
-    String SELECT_TIME_HOURLY = "SELECT time FROM komodoDB.hourly " +
+    String SELECT_TIME_HOURLY = "SELECT time FROM komodo_crypto.hourly " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3} " +
             "ORDER BY time ASC;";
-    String SELECT_TIME_MINUTELY = "SELECT time FROM komodoDB.minutely " +
+    String SELECT_TIME_MINUTELY = "SELECT time FROM komodo_crypto.minutely " +
             "WHERE fromCurrency = #{param1} AND toCurrency = #{param2} AND exchange = #{param3} " +
             "ORDER BY time ASC;";
 
-    String COUNT_DAILY_RECORDS = "SELECT COUNT(id) FROM `komodoDB`.`daily` " +
+    String COUNT_DAILY_RECORDS = "SELECT COUNT(id) FROM `komodo_crypto`.`daily` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Bitstamp';";
-    String COUNT_HOURLY_RECORDS = "SELECT COUNT(id) FROM `komodoDB`.`hourly` " +
+    String COUNT_HOURLY_RECORDS = "SELECT COUNT(id) FROM `komodo_crypto`.`hourly` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Bitstamp';";
-    String COUNT_MINUTELY_RECORDS = "SELECT COUNT(id) FROM `komodoDB`.`minutely` " +
+    String COUNT_MINUTELY_RECORDS = "SELECT COUNT(id) FROM `komodo_crypto`.`minutely` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Bitstamp';";
 
-    String GET_LAST_TIMESTAMP_DAILY = "SELECT `time` FROM `komodoDB`.`daily` " +
+    String GET_LAST_TIMESTAMP_DAILY = "SELECT `time` FROM `komodo_crypto`.`daily` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Binance' " +
             "ORDER BY `time` ASC LIMIT 1;";
-    String GET_LAST_TIMESTAMP_HOURLY = "SELECT `time` FROM `komodoDB`.`hourly` " +
+    String GET_LAST_TIMESTAMP_HOURLY = "SELECT `time` FROM `komodo_crypto`.`hourly` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Binance' " +
             "ORDER BY `time` ASC LIMIT 1;";
-    String GET_LAST_TIMESTAMP_MINUTELY = "SELECT `time` FROM `komodoDB`.`minutely` " +
+    String GET_LAST_TIMESTAMP_MINUTELY = "SELECT `time` FROM `komodo_crypto`.`minutely` " +
             "WHERE `fromCurrency` = 'ETH' AND `toCurrency` = 'BTC' AND `exchange` = 'Binance' " +
             "ORDER BY `time` ASC LIMIT 1;";
 
-    String INSERT_PRICE_AGGREGATED_WEEKLY = "INSERT IGNORE INTO komodoDB.weekly " +
+    String INSERT_PRICE_AGGREGATED_WEEKLY = "INSERT IGNORE INTO komodo_crypto.weekly " +
             "(`time`, `fromCurrency`, `toCurrency`, `exchange`, `open`, `low`, `high`, `close`, `average`, `volumeFrom`, `volumeTo`) " +
             "VALUES (" +
                 "#{arg1}, " +
                 "#{arg2}, " +
                 "#{arg3}, " +
                 "#{arg4}, " +
-                "(SELECT open FROM komodoDB.hourly WHERE time = #{arg0}), " +
-                "(SELECT MIN(low) FROM komodoDB.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
-                "(SELECT MAX(high) FROM komodoDB.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
-                "(SELECT close FROM komodoDB.hourly WHERE time = #{arg1}), " +
-                "(SELECT AVG(average) FROM komodoDB.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
-                "(SELECT volumeFrom FROM komodoDB.hourly WHERE time = #{arg0}), " +
-                "(SELECT volumeTo FROM komodoDB.hourly WHERE time = #{arg1}) " +
+                "(SELECT open FROM komodo_crypto.hourly WHERE time = #{arg0}), " +
+                "(SELECT MIN(low) FROM komodo_crypto.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
+                "(SELECT MAX(high) FROM komodo_crypto.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
+                "(SELECT close FROM komodo_crypto.hourly WHERE time = #{arg1}), " +
+                "(SELECT AVG(average) FROM komodo_crypto.hourly WHERE (time >= #{arg0} AND time <= #{arg1})), " +
+                "(SELECT volumeFrom FROM komodo_crypto.hourly WHERE time = #{arg0}), " +
+                "(SELECT volumeTo FROM komodo_crypto.hourly WHERE time = #{arg1}) " +
             ");";
 
-    String INSERT_TWITTER_DATA = "INSERT INTO `komodoDB`.`twitter` " +
+    String INSERT_TWITTER_DATA = "INSERT INTO `komodo_crypto`.`twitter` " +
             "(`time`, `currency`, `statuses`, `followers`, `favorites`, `lists`, `following`, `points`) " +
             "VALUES (#{time}, #{currency}, #{statuses}, #{followers}, #{favorites}, #{lists}, #{following}, #{points});";
-    String INSERT_REDDIT_DATA = "INSERT INTO `komodoDB`.`reddit` " +
+    String INSERT_REDDIT_DATA = "INSERT INTO `komodo_crypto`.`reddit` " +
             "(`time`, `currency`, `subscribers`, `commentsPerDay`, `commentsPerHour`, `activeUsers`, `postsPerDay`, `postsPerHour`, `points`) " +
             "VALUES (#{time}, #{currency}, #{subscribers}, #{commentsPerDay}, #{commentsPerHour}, #{activeUsers}, #{postsPerDay}, #{postsPerHour}, #{points});";
-    String INSERT_FACEBOOK_DATA = "INSERT INTO `komodoDB`.`facebook` " +
+    String INSERT_FACEBOOK_DATA = "INSERT INTO `komodo_crypto`.`facebook` " +
             "(`time`, `currency`, `talkingAbout`, `likes`, `points`) " +
             "VALUES (#{time}, #{currency}, #{talkingAbout}, #{likes}, #{points});";
 
-    String SELECT_TWITTER_DATA = "SELECT * FROM komodoDB.twitter;";
-    String SELECT_REDDIT_DATA = "SELECT * FROM komodoDB.reddit;";
-    String SELECT_FACEBOOK_DATA = "SELECT * FROM komodoDB.facebook;";
+    String SELECT_TWITTER_DATA = "SELECT * FROM komodo_crypto.twitter;";
+    String SELECT_REDDIT_DATA = "SELECT * FROM komodo_crypto.reddit;";
+    String SELECT_FACEBOOK_DATA = "SELECT * FROM komodo_crypto.facebook;";
 
-    String INSERT_NEWS_DATA = "INSERT IGNORE INTO `komodoDB`.`news` " +
+    String INSERT_NEWS_DATA = "INSERT IGNORE INTO `komodo_crypto`.`news` " +
             "(`articleId`, `publishedOn`, `title`, `url`, `body`, `tags`, `categories`) " +
             "VALUES (#{articleId}, #{publishedOn}, #{title}, #{url}, #{body}, #{tags}, #{categories});";
-    String SELECT_ALL_NEWS_DATA = "SELECT * FROM `komodoDB`.`news`;";
-    String SELECT_NEWS_BY_CATEGORY = "SELECT * FROM `komodoDB`.`news` WHERE categories LIKE '%${category}%';";
+    String SELECT_ALL_NEWS_DATA = "SELECT * FROM `komodo_crypto`.`news`;";
+    String SELECT_NEWS_BY_CATEGORY = "SELECT * FROM `komodo_crypto`.`news` WHERE categories LIKE '%${category}%';";
 
+
+    // Gets a list of currencies traded.
+    @Select("SELECT `symbol` FROM `" + dbName + "`.`currencies`;")
+    public String[] getCurrencies();
+
+    // Gets a list of exchanges traded on.
+    @Select("SELECT `exchange_name` FROM `" + dbName + "`.exchanges;")
+    public String[] getExchanges();
 
     // Adds historical data by time period.
     @Insert(INSERT_PRICE_DAILY)

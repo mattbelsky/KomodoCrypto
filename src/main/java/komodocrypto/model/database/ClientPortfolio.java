@@ -5,15 +5,15 @@ import java.sql.Timestamp;
 
 public class ClientPortfolio {
 
-    int client_portfolio_id;
+    int id;
     int user_id;
     BigDecimal deposit_value;
     BigDecimal current_value;
     double percentage_ownership;
     Timestamp timestamp;
 
-    public int getClient_portfolio_id() {
-        return client_portfolio_id;
+    public int getId() {
+        return id;
     }
 
     public int getUser_id() {

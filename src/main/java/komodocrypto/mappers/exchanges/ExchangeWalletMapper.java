@@ -12,20 +12,19 @@ import java.util.List;
 @Mapper
 public interface ExchangeWalletMapper {
 
-    String SELECT_ALL_EXCHANGE_WALLETS = "SELECT * FROM `komodoDB`.`exchange_wallet` ORDER BY `exchange_wallet_id` DESC;";
-    String SELECT_BY_EXCHANGE_ID = "SELECT * FROM `komodoDB`.`exchange_wallet` WHERE `exchange_id` = #{exchange_id} ORDER BY `exchange_wallet_id` DESC;";
-    String SELECT_BY_CURRENCY_ID = "SELECT * FROM `komodoDB`.`exchange_wallet` WHERE `currency_id` = #{currency_id} ORDER BY `exchange_wallet_id` DESC;";
-    String SELECT_BY_EXCHANGE_AND_CURRENCY_ID = "SELECT * FROM `komodoDB`.`exchange_wallet` " +
-            "WHERE `exchange_id` = #{args0} AND `currency_id` = #{args1} ORDER BY `exchange_wallet_id` DESC;";
-    String SELECT_AVAILABLE_BY_EXCHANGE_AND_CURRENCY_ID = "SELECT `available` FROM `komodoDB`.`exchange_wallet` " +
-            "WHERE `exchange_id` = #{args0} AND `currency_id` = #{args1} ORDER BY `exchange_wallet_id` DESC LIMIT 1;";
+    String SELECT_ALL_EXCHANGE_WALLETS = "SELECT * FROM `komodo_crypto`.`exchange_wallet` ORDER BY `exchange_wallet_id` DESC;";
+    String SELECT_BY_EXCHANGE_ID = "SELECT * FROM `komodo_crypto`.`exchange_wallet` WHERE `exchange_id` = #{exchange_id} ORDER BY `exchange_wallet_id` DESC;";
+    String SELECT_BY_CURRENCY_ID = "SELECT * FROM `komodo_crypto`.`exchange_wallet` WHERE `currency_id` = #{currency_id} ORDER BY `exchange_wallet_id` DESC;";
+    String SELECT_BY_EXCHANGE_AND_CURRENCY_ID = "SELECT * FROM `komodo_crypto`.`exchange_wallet` " +
+            "WHERE `exchange_id` = #{arg0} AND `currency_id` = #{arg1} ORDER BY `exchange_wallet_id` DESC;";
+    String SELECT_AVAILABLE_BY_EXCHANGE_AND_CURRENCY_ID = "SELECT `available` FROM `komodo_crypto`.`exchange_wallet` " +
+            "WHERE `exchange_id` = #{arg0} AND `currency_id` = #{arg1} ORDER BY `exchange_wallet_id` DESC LIMIT 1;";
 
-    String INSERT_NEW_DATA = "INSERT INTO `komodoDB`.`exchange_wallet` " +
+    String INSERT_NEW_DATA = "INSERT INTO `komodo_crypto`.`exchange_wallet` " +
             "(`currency_id`, `deposit_address`, `total`, `available`, `frozen`, `borrowed`, `loaned`, `withdrawing`, `depositing`, `portfolio_id`, `exchange_id`) " +
             "VALUES (#{currency_id}, #{deposit_address}, #{total}, #{available}, #{frozen}, #{borrowed}, #{loaned}, #{withdrawing}, #{depositing}, #{portfolio_id}, #{exchange_id};";
 
     @Select(SELECT_ALL_EXCHANGE_WALLETS)
-    @ResultMap("ExchangeWallet")
     public List<ExchangeWallet> getExchangeWallets();
 
     @Select(SELECT_BY_EXCHANGE_ID)

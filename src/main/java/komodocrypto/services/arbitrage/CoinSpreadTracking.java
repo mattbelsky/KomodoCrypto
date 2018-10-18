@@ -3,10 +3,12 @@ package komodocrypto.services.arbitrage;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 
+@Service
 public class CoinSpreadTracking {
 
 

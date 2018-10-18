@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 public class Transaction {
 
     private int transaction_id;
-    private int exchange_id; //potentially fk from Exchange
+    private int exchange_id; //potentially fk from ExchangeData
     private int currency_pair_id; //fk from currency_pair
     private String transaction_type; //possible values are inTransfer, outTransfer, sell, buy, deposit, withdrawal
     private BigDecimal transaction_amount;

@@ -10,7 +10,7 @@ import komodocrypto.model.TradeData;
 import komodocrypto.model.database.Currency;
 import komodocrypto.model.database.GroupPortfolio;
 import komodocrypto.model.database.Transaction;
-import komodocrypto.model.exchanges.ExchangeInfo;
+import komodocrypto.model.exchanges.ExchangeData;
 import komodocrypto.model.exchanges.ExchangeWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,9 +35,6 @@ public class AssetTrackingService {
     ExchangeWalletMapper exchangeWalletMapper;
 
     @Autowired
-    ExchangeWallet exchangeWallet;
-
-    @Autowired
     ArbitrageTradeHistoryMapper arbitrageTradeHistoryMapper;
 
     /*  Contains the following methods:
@@ -58,23 +55,23 @@ public class AssetTrackingService {
     //                    - the buy/sell amounts
 
 
-    public Transaction recalculateBalance(ExchangeInfo exchange, Currency currency, BigDecimal amount, String transactionType, String algorithm) {
+    public Transaction recalculateBalance(ExchangeData exchangeData, Currency currency, BigDecimal amount, String transactionType, String algorithm) {
 
         Transaction transaction = new Transaction();
 
         int currencyId = currency.getCurrency_id();
-        int exchangeId = exchange.getExchangeId();
+        int exchangeId = exchangeData.getId();
         BigDecimal fee = BigDecimal.valueOf(0);
 
         switch (transactionType) {
             case "buy":
-                fee = exchange.getBuyFee();
+                fee = exchangeData.getBuyFee();
                 break;
             case "sell":
-                fee = exchange.getSellFee();
+                fee = exchangeData.getSellFee();
                 break;
             case "transfer":
-                fee = exchange.getTransferFee();
+                fee = exchangeData.getTransferFee();
                 break;
         }
 
@@ -100,7 +97,7 @@ public class AssetTrackingService {
         transaction.setBalance_after_transaction(balanceAfterTransaction);
 
         /* recalculate balance after buy/sell transaction
-                check balance on the exchange wallet of the selected currency
+                check balance on the exchangeData wallet of the selected currency
                 total1 = select total where exchange_id = exchange_name.getExchange_id and currency_id = currency_pair_id.getSymbol1
                 total2 = select total where exchange_id = exchange_name.getExchange_id and currency_id = currency_pair_id.getSymbol2
                 newTotal1 = total1 - sellAmount
@@ -126,7 +123,7 @@ public class AssetTrackingService {
         return tldata;
     }
 
-    public void updateAssetsUnderManagement(int buy_exchange_id, int sell_exchange_id, ExchangeInfo exchange_name,
+    public void updateAssetsUnderManagement(int buy_exchange_id, int sell_exchange_id, ExchangeData exchange_name,
                                             double price, double amount, String status, int currency_pair_id){
 
         /* transactionType determines buy, sell, or transfer
@@ -230,9 +227,9 @@ public class AssetTrackingService {
 
         // Creates and initializes the values of a new GroupPortfolio object for inserting into its eponymous table.
         GroupPortfolio groupPortfolio = new GroupPortfolio();
-        groupPortfolio.setDeposit_value(depositOrWithdrawalValue);
-        groupPortfolio.setCurrent_value(currentValueGroup.add(depositOrWithdrawalValue));
-        groupPortfolio.setNum_investors(numInvestors + numNewInvestors);
+        groupPortfolio.setDepositValue(depositOrWithdrawalValue);
+        groupPortfolio.setCurrentValue(currentValueGroup.add(depositOrWithdrawalValue));
+        groupPortfolio.setNumInvestors(numInvestors + numNewInvestors);
 
         // Checks if this transaction is a deposit or withdrawal and adds or subtracts it and distributes and rebalances
         // funds across the exchanges as necessary.

@@ -1,10 +1,10 @@
 package komodocrypto.services.data_collection;
 
+import komodocrypto.TimePeriod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 @Service
@@ -27,7 +27,7 @@ public class ScheduledDataCollectionTasks {
     private void queryTimestampDaily() {
 
         int now = (int) (System.currentTimeMillis() / 1000);
-        int midnight = now - CryptoCompareHistoricalService.SEC_IN_MIN * 2;
+        int midnight = now - TimePeriod.SEC_IN_MIN.getValue() * 2;
         cronHit = true;
 
         timestampDaily.add(midnight);
@@ -46,7 +46,7 @@ public class ScheduledDataCollectionTasks {
     private void queryTimestampHourly() {
 
         int now = (int) (System.currentTimeMillis() / 1000);
-        int hour = now - CryptoCompareHistoricalService.SEC_IN_MIN;
+        int hour = now - TimePeriod.SEC_IN_MIN.getValue();
         cronHit = true;
 
         timestampHourly.add(hour);
@@ -71,12 +71,12 @@ public class ScheduledDataCollectionTasks {
         // The reason this method call is here rather than in the hourly table is because the endpoint does not allow
         // specifying a timestamp, and the hourly task actually runs 60 seconds after the hour has begun. Having it here
         // allows more accurate data collection.
-        if (now % (CryptoCompareHistoricalService.SEC_IN_MIN * CryptoCompareHistoricalService.MIN_IN_HOUR) == 0) {
+        if (now % (TimePeriod.SEC_IN_MIN.getValue() * TimePeriod.MIN_IN_HOUR.getValue()) == 0) {
             historicalService.addSocial();
         }
 
         for (int j = 0; j < 5; j++) {
-            timestampMinutely.add(now - CryptoCompareHistoricalService.SEC_IN_MIN * j);
+            timestampMinutely.add(now - TimePeriod.SEC_IN_MIN.getValue() * j);
         }
 
         historicalService.switchCronOps("minute");
@@ -93,7 +93,7 @@ public class ScheduledDataCollectionTasks {
     private void queryTimestampWeekly() {
 
         int now = (int) (System.currentTimeMillis() / 1000);
-        int week = now - CryptoCompareHistoricalService.SEC_IN_MIN * 3;
+        int week = now - TimePeriod.SEC_IN_MIN.getValue() * 3;
         cronHit = true;
 
         timestampWeekly = week;

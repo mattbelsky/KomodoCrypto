@@ -2,16 +2,16 @@ package komodocrypto.model.exchanges;
 
 import java.math.BigDecimal;
 
-public class ExchangeInfo {
+public class ExchangeData {
 
-    int exchangeId;
+    int id;
     String exchangeName;
     BigDecimal transferFee;
     BigDecimal buyFee;
     BigDecimal sellFee;
 
-    public int getExchangeId() {
-        return exchangeId;
+    public int getId() {
+        return id;
     }
 
     public String getExchangeName() {

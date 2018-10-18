@@ -4,7 +4,7 @@ import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
 import komodocrypto.mappers.database.CurrencyMapper;
 import komodocrypto.mappers.database.CurrencyPairsMapper;
 import komodocrypto.mappers.database.TransactionMapper;
-import komodocrypto.mappers.exchanges.ExchangeInfoMapper;
+import komodocrypto.mappers.exchanges.ExchangeMapper;
 import komodocrypto.mappers.exchanges.ExchangeWalletMapper;
 import komodocrypto.model.TradeData;
 import komodocrypto.model.database.Transaction;
@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 
 @Service
 public class TradeService {
@@ -44,7 +43,7 @@ public class TradeService {
     CurrencyPairsMapper currencyPairsMapper;
 
     @Autowired
-    ExchangeInfoMapper exchangeInfoMapper;
+    ExchangeMapper exchangeMapper;
 
     @Autowired
     ExchangeWalletMapper exchangeWalletMapper;
@@ -63,8 +62,8 @@ public class TradeService {
         tradeData.setToExchange(exchanges[1]);
         tradeData.setCurrencyPair(currencyPair);
 
-        int idFromExchange = exchangeInfoMapper.getExchangeIdByName(exchanges[0].getExchangeSpecification().getExchangeName());
-        int idToExchange = exchangeInfoMapper.getExchangeIdByName(exchanges[1].getExchangeSpecification().getExchangeName());
+        int idFromExchange = exchangeMapper.getExchangeIdByName(exchanges[0].getExchangeSpecification().getExchangeName());
+        int idToExchange = exchangeMapper.getExchangeIdByName(exchanges[1].getExchangeSpecification().getExchangeName());
         tradeData.setIdFromExchange(idFromExchange);
         tradeData.setIdToExchange(idToExchange);
 

@@ -1,6 +1,6 @@
 # Komodo Crypto
 
-Komodo Crypto integrates with the following exchanges:
+Komodo Crypto integrates with the following exchangeData:
   - Binance
   - Bitstamp
   - Bittrex
@@ -12,7 +12,7 @@ Komodo Crypto integrates with the following exchanges:
 ### API Keys
 
 In order to run Komodo Crypto, you will need verified accounts and API keys for 
-each of our integrated exchanges. You can enter your specific credentials into the 
+each of our integrated exchangeData. You can enter your specific credentials into the
 `application.properties` file in the `resources` directory. Please note, it can 
 sometimes take some time to verify your account, and if you have an account with 
 coins in it be careful before running any methods that will make actual changes 
@@ -58,7 +58,7 @@ The Komodo MVC is secured with Basic Auth. You must register and obtain a valid 
 and password before you can use this application.
 
 ## API Security
-The Komodo API is secured with OAuth2 Client Credentials Grants. To access secure endpoints you need to exchange your client
+The Komodo API is secured with OAuth2 Client Credentials Grants. To access secure endpoints you need to exchangeData your client
 credentials for an access token.
 
 You can register client credentials by making a POST request to the Authorization Server with your email as the

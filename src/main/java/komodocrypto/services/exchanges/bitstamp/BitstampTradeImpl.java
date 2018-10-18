@@ -38,7 +38,7 @@ public class BitstampTradeImpl {
 
     public String placeMarketOrder(Order.OrderType type, BigDecimal amount, CurrencyPair pair)
             throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         TradeService tradeService = bitstamp.getTradeService();
@@ -57,7 +57,7 @@ public class BitstampTradeImpl {
     }
 
     public boolean cancelMarketOrder(String marketOrderReturnValue) throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         TradeService tradeService = bitstamp.getTradeService();
@@ -80,7 +80,7 @@ public class BitstampTradeImpl {
      * @throws ExchangeConnectionException if unable to connect to exchange
      */
     public OpenOrders getOpenOrders() throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         TradeService tradeService = bitstamp.getTradeService();

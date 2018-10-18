@@ -51,7 +51,7 @@ public class UserControllerMVC {
         ArrayList<ArbitrageModel> arbitrage = arbitrageTradingService.getArbitrageData();
         modelAndView.addObject("arbitrage", arbitrage);
         /*will need to work with ouath to get username*/
-        User user = arbitrageTradingService.tempUser();
+        User user = arbitrageTradingService.createTempUser();
         modelAndView.addObject("userWelcome", "Welcome " + user.getFirst_name());
         modelAndView.setViewName("user_dashboard");
         return modelAndView;
@@ -72,7 +72,7 @@ public class UserControllerMVC {
         ModelAndView modelAndView = new ModelAndView();
         //for when oath is added use:
         //User user = new User();
-        User user = arbitrageTradingService.tempUser();
+        User user = arbitrageTradingService.createTempUser();
         modelAndView.addObject("user", user);
         modelAndView.addObject("userWelcome", "Welcome " + user.getFirst_name());
         modelAndView.setViewName("profile");

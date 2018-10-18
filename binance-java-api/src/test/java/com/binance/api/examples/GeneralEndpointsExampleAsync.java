@@ -24,7 +24,7 @@ public class GeneralEndpointsExampleAsync {
     // Check server time
     client.getServerTime(response -> System.out.println(response.getServerTime()));
 
-    // Exchange info
+    // ExchangeData info
     client.getExchangeInfo(exchangeInfo -> {
       System.out.println(exchangeInfo.getTimezone());
       System.out.println(exchangeInfo.getSymbols());

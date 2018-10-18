@@ -1,7 +1,5 @@
 package komodocrypto.services.exchanges.bitstamp;
 
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.market.TickerPrice;
 import komodocrypto.configuration.exchange_utils.BitstampUtil;
 import komodocrypto.exceptions.custom_exceptions.ExchangeConnectionException;
 import org.knowm.xchange.Exchange;
@@ -9,7 +7,6 @@ import org.knowm.xchange.bitstamp.service.BitstampMarketDataServiceRaw;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Trades;
-import org.knowm.xchange.service.account.AccountService;
 import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
 
 @Service
 public class BitstampTicker {
@@ -34,7 +30,7 @@ public class BitstampTicker {
      * @param pair CurrenctPair of asset pair to be traded
      */
     public Ticker getTickerInfo(CurrencyPair pair) throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         MarketDataService marketDataService = bitstamp.getMarketDataService();
@@ -55,11 +51,11 @@ public class BitstampTicker {
      *
      * @param pair CurrencyPair requested
      * @return Trades object (JSON)
-     * @throws ExchangeConnectionException if unable to connect to the Exchange
+     * @throws ExchangeConnectionException if unable to connect to the ExchangeData
      */
     public Trades getBitstampTradesDay(CurrencyPair pair)
             throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         MarketDataService marketDataService = bitstamp.getMarketDataService();
@@ -80,11 +76,11 @@ public class BitstampTicker {
      *
      * @param pair CurrencyPair requested
      * @return Trades object (JSON)
-     * @throws ExchangeConnectionException if unable to connect to the Exchange
+     * @throws ExchangeConnectionException if unable to connect to the ExchangeData
      */
     public Trades getBitstampTradesHour(CurrencyPair pair)
             throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         MarketDataService marketDataService = bitstamp.getMarketDataService();
@@ -105,11 +101,11 @@ public class BitstampTicker {
      *
      * @param pair CurrencyPair requested
      * @return Trades object (JSON)
-     * @throws ExchangeConnectionException if unable to connect to the Exchange
+     * @throws ExchangeConnectionException if unable to connect to the ExchangeData
      */
     public Trades getBitstampTradesMinute(CurrencyPair pair)
             throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         MarketDataService marketDataService = bitstamp.getMarketDataService();

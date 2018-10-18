@@ -115,13 +115,18 @@
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-core</artifactId>
-			<version>4.3.6</version>
+			<version>4.3.5</version>
 		</dependency>
-		<!--<dependency>-->
-			<!--<groupId>org.knowm.xchange</groupId>-->
-			<!--<artifactId>xchange-binance</artifactId>-->
-			<!--<version>4.3.5</version>-->
-		<!--</dependency>-->
+		<dependency>
+			<groupId>org.knowm.xchange</groupId>
+			<artifactId>xchange-examples</artifactId>
+			<version>4.3.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.knowm.xchange</groupId>
+			<artifactId>xchange-binance</artifactId>
+			<version>4.3.5</version>
+		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-bitstamp</artifactId>
@@ -142,6 +147,7 @@
 			<artifactId>xchange-kraken</artifactId>
 			<version>4.3.5</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.binance.api</groupId>
 			<artifactId>binance-api-client</artifactId>

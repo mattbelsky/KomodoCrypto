@@ -11,7 +11,7 @@ public enum FilterType {
   MAX_NUM_ORDERS,
   MAX_ALGO_ORDERS,
 
-  // Exchange
+  // ExchangeData
   EXCHANGE_MAX_NUM_ORDERS,
   EXCHANGE_MAX_ALGO_ORDERS
 }

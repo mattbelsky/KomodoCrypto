@@ -21,7 +21,7 @@ public class KomodoAccountInfo {
     public AccountService selectExchange(String exchange) throws ExchangeConnectionException {
         switch (exchange.toLowerCase()) {
             case "bitstamp" : {
-                // Create Exchange
+                // Create ExchangeData
                 Exchange bitstamp = bitstampUtil.createExchange();
                 // Connect to account
                 AccountService accountService = bitstamp.getAccountService();
@@ -35,7 +35,7 @@ public class KomodoAccountInfo {
 
             }
             default:
-                throw new ExchangeConnectionException("Invalid Exchange", HttpStatus.BAD_REQUEST);
+                throw new ExchangeConnectionException("Invalid ExchangeData", HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -11,16 +11,16 @@ import java.util.List;
 @Mapper
 public interface ClientPortfolioMapper {
 
-    String GET_ALL_ENTRIES = "SELECT * FROM `komodoDB`.`client_portfolio`;";
+    String GET_ALL_ENTRIES = "SELECT * FROM `komodo_crypto`.`client_portfolio`;";
 
-    String INSERT_ENTRY = "INSERT INTO `komodoDB`.`client_portfolio` " +
+    String INSERT_ENTRY = "INSERT INTO `komodo_crypto`.`client_portfolio` " +
             "(`user_id`, `deposit_value`, `current_value`, `percentage_ownership`) " +
             "VALUES (#{user_id}, #{deposit_value}, #{current_value}, #{percentage_ownership});";
 
-    String GET_NUM_DEPOSITS_BY_ID = "SELECT COUNT(`deposit_value`) FROM `komodoDB`.`client_portfolio` " +
+    String GET_NUM_DEPOSITS_BY_ID = "SELECT COUNT(`deposit_value`) FROM `komodo_crypto`.`client_portfolio` " +
             "WHERE `user_id` = #{userId};";
 
-    String GET_CURRENT_VALUE = "SELECT `current_value` FROM `komodoDB`.`client_portfolio` " +
+    String GET_CURRENT_VALUE = "SELECT `current_value` FROM `komodo_crypto`.`client_portfolio` " +
             "WHERE `user_id` = #{userId} ORDER BY `timestamp` DESC LIMIT 1;";
 
     @Select(GET_ALL_ENTRIES)

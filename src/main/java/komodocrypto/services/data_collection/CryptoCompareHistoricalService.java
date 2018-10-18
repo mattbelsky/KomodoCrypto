@@ -1,9 +1,9 @@
 package komodocrypto.services.data_collection;
 
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.market.Candlestick;
-import com.binance.api.client.domain.market.CandlestickInterval;
-import komodocrypto.configuration.exchange_utils.BinanceUtil;
+//import com.binance.api.client.BinanceApiRestClient;
+//import com.binance.api.client.domain.market.Candlestick;
+//import com.binance.api.client.domain.market.CandlestickInterval;
+import komodocrypto.TimePeriod;
 import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
 import komodocrypto.mappers.CryptoMapper;
 import komodocrypto.model.RootResponse;
@@ -20,7 +20,6 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class CryptoCompareHistoricalService {
@@ -32,30 +31,16 @@ public class CryptoCompareHistoricalService {
     CryptoMapper cryptoMapper;
 
     @Autowired
-    ScheduledTasks scheduledTasks;
+    ScheduledDataCollectionTasks scheduledTasks;
+
+    @Autowired
+    CacheableDataCollectionTasks cacheableDataCollectionTasks;
 
     @Autowired
     private TaskExecutor taskExecutor;
 
-    @Autowired
-    BinanceUtil binanceUtil;
-
-    // The list of trading pairs
-    private static String[][] tradingPairs = {
-            {"ETH", "BTC"},
-            {"BCH", "BTC"},
-            {"LTC", "BTC"},
-            {"XRP", "BTC"}
-    };
-
-    // The list of exchanges
-    private static String[] exchanges = {
-            "Binance",
-            "Bitstamp",
-            "Bittrex",
-            "Kraken",
-            "Coinbase"
-    };
+//    @Autowired
+//    BinanceUtil binanceUtil;
 
     // The time periods to query for
     private static String[] periods = {
@@ -64,12 +49,8 @@ public class CryptoCompareHistoricalService {
             "minute"
     };
 
-    final static int HOURS_IN_DAY = 24;
-    final static int MIN_IN_HOUR = 60;
-    final static int SEC_IN_MIN = 60;
-
     /**
-     * Loads a specified number of records from the CryptoCompare API into the database by period. This is potentially
+     * Loads a specified number of records from CryptoCompare into the database by period. This is potentially
      * a very long-running task, so, while it returns a response containing the data currently available in the database,
      * the task continues executing in the background.
      * @param period the time period to backload for -- corresponds to a database table
@@ -77,6 +58,9 @@ public class CryptoCompareHistoricalService {
      * @return a response object containing the data already extant in the database
      */
     public RootResponse backloadData(String period, int numRecords) {
+
+        String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
+        String[] exchanges = cacheableDataCollectionTasks.getExchanges();
 
         // As the CryptoCompare API calls take some time, this is executed as a background task in a new thread.
         taskExecutor.execute(new Runnable() {
@@ -91,8 +75,7 @@ public class CryptoCompareHistoricalService {
                     for (String exchange : exchanges) {
 
                         // Skips Coinbase for the XRP/BTC pair.
-                        if ((pair[0].equals("XRP") || pair[1].equals("XRP"))
-                                && exchange.equals("Coinbase")) continue;
+                        if ((pair[0].equals("XRP") || pair[1].equals("XRP")) && exchange.equals("Coinbase")) continue;
 
                         /*  if (query count(id)) >= numRecords
                                 continue
@@ -153,6 +136,9 @@ public class CryptoCompareHistoricalService {
      * @return a response object containing the data in the database
      */
     public RootResponse switchCronOps(String period) {
+
+        String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
+        String[] exchanges = cacheableDataCollectionTasks.getExchanges();
 
         // Queries for historical data for each trading pair from each exchange.
         // NOTE: Coinbase does not support XRP/BTC, so it is skipped for this pair.
@@ -356,105 +342,105 @@ public class CryptoCompareHistoricalService {
 
          */
 
-        // In case the missing timestamps are not sequential, breaks them into sequential bits, and feeds them to the
-        // method that gets the data. Doing this should reduce the number of calls to the Binance API.
-        int start = 0;
-
-        for (int i = 1; i < missing.length - 1; i++) {
-
-            // Detects breaks in a sequential series of timestamps and sends the latest detected sequential bit of the
-            // array to a new method.
-            if (missing[i].getTime() - missing[i - 1].getTime() > getPeriodLength(period)) {
-
-                updateHistDataBinance(period, Arrays.copyOfRange(missing, start, i));
-                start = i;
-            }
-
-            if (i == missing.length - 2) updateHistDataBinance(period, missing);
-        }
+//        // In case the missing timestamps are not sequential, breaks them into sequential bits, and feeds them to the
+//        // method that gets the data. Doing this should reduce the number of calls to the Binance API.
+//        int start = 0;
+//
+//        for (int i = 1; i < missing.length - 1; i++) {
+//
+//            // Detects breaks in a sequential series of timestamps and sends the latest detected sequential bit of the
+//            // array to a new method.
+//            if (missing[i].getTime() - missing[i - 1].getTime() > getPeriodLength(period)) {
+//
+//                updateHistDataBinance(period, Arrays.copyOfRange(missing, start, i));
+//                start = i;
+//            }
+//
+//            if (i == missing.length - 2) updateHistDataBinance(period, missing);
+//        }
 
         return new RootResponse(HttpStatus.OK, "Query successful.", getResponseData());
     }
 
-    // Fills gaps in database where CryptoCompare has no historical data for the Binance exchange.
-    public RootResponse updateHistDataBinance(String period, Data[] missing) {
-
-        /*  get timestamps from data[]
-
-            fromToCurrencies = from + to
-            candlestick interval should depend on the time period
-            fromTime = (first timestamp - secInPeriod) * 1000 + 1L
-            toTime = last timestamp * 1000L
-            candlesticks = client.getcandlestickbars...
-         */
-        String fromToCurrencies = missing[0].getFromCurrency() + missing[0].getToCurrency();
-        long fromTime = (missing[0].getTime() - getPeriodLength(period)) * 1000 + 1l;
-        long toTime = missing[missing.length - 1].getTime() * 1000l;
-        List<Candlestick> candlesticks = new ArrayList<>();
-
-        // Connect to exchange
-        BinanceApiRestClient client = binanceUtil.createExchange();
-
-        // Specific candlestick bar
-        switch (period) {
-            case "day":
-                 candlesticks = client.getCandlestickBars(
-                        fromToCurrencies, CandlestickInterval.DAILY,500, fromTime, toTime);
-                break;
-            case "hour":
-                candlesticks = client.getCandlestickBars(
-                        fromToCurrencies, CandlestickInterval.HOURLY,500, fromTime, toTime);
-                break;
-            default:
-                candlesticks = client.getCandlestickBars(
-                        fromToCurrencies, CandlestickInterval.ONE_MINUTE,500, fromTime, toTime);
-        }
-
-        /*  for (int i = 0; i < candlesticks.size(); i++)
-                Data entry = new Data();
-                entry.setTime(missing[i].getTime())
-                entry.setFromCurrency(missing[i].fromCurrency())
-                entry.setToCurrency(missing[i].toCurrency())
-                entry.setExchange(missing[i].getExchange())
-                entry.setOpen(candlesticks.get(i).getOpen()
-                entry.setClose(candlesticks.get(i).getClose()
-                low, high
-                entry.setAverage(averagePriceHistorical(high, low)
-                entry.setVolumeFrom(
-                entry.setVolumeTo(
-
-                switch period
-                    cryptoMapper.updateDataDaily(entry)
-                    ...
-         */
-        // Maps each candlestick object to a data object which will be used to update the database.
-        // What if missing and candlesticks are different sizes?
-        for (int i = 0; i < candlesticks.size(); i++) {
-
-            Data entry = new Data();
-            Candlestick stick = candlesticks.get(i);
-
-            entry.setOpen(Double.parseDouble(stick.getOpen()));
-            entry.setClose(Double.parseDouble(stick.getClose()));
-            entry.setHigh(Double.parseDouble(stick.getHigh()));
-            entry.setClose(Double.parseDouble(stick.getClose()));
-            entry.setAverage(averagePriceHistorical(missing[i].getHigh(), missing[i].getLow()));
-            // volumefrom & to?
-
-            switch (period) {
-                case "day":
-                    cryptoMapper.updateDataDaily(missing[i].getTime(), entry);
-                    break;
-                case "hour":
-                    cryptoMapper.updateDataHourly(missing[i].getTime(), entry);
-                    break;
-                default:
-                    cryptoMapper.updateDataMinutely(missing[i].getTime(), entry);
-            }
-        }
-
-        return new RootResponse(HttpStatus.OK, "Query successful.", cryptoMapper.getPriceDaily());
-    }
+//    // Fills gaps in database where CryptoCompare has no historical data for the Binance exchange.
+//    public RootResponse updateHistDataBinance(String period, Data[] missing) {
+//
+//        /*  get timestamps from data[]
+//
+//            fromToCurrencies = from + to
+//            candlestick interval should depend on the time period
+//            fromTime = (first timestamp - secInPeriod) * 1000 + 1L
+//            toTime = last timestamp * 1000L
+//            candlesticks = client.getcandlestickbars...
+//         */
+//        String fromToCurrencies = missing[0].getFromCurrency() + missing[0].getToCurrency();
+//        long fromTime = (missing[0].getTime() - getPeriodLength(period)) * 1000 + 1l;
+//        long toTime = missing[missing.length - 1].getTime() * 1000l;
+//        List<Candlestick> candlesticks = new ArrayList<>();
+//
+//        // Connect to exchange
+//        BinanceApiRestClient client = binanceUtil.createExchange();
+//
+//        // Specific candlestick bar
+//        switch (period) {
+//            case "day":
+//                 candlesticks = client.getCandlestickBars(
+//                        fromToCurrencies, CandlestickInterval.DAILY,500, fromTime, toTime);
+//                break;
+//            case "hour":
+//                candlesticks = client.getCandlestickBars(
+//                        fromToCurrencies, CandlestickInterval.HOURLY,500, fromTime, toTime);
+//                break;
+//            default:
+//                candlesticks = client.getCandlestickBars(
+//                        fromToCurrencies, CandlestickInterval.ONE_MINUTE,500, fromTime, toTime);
+//        }
+//
+//        /*  for (int i = 0; i < candlesticks.size(); i++)
+//                Data entry = new Data();
+//                entry.setTime(missing[i].getTime())
+//                entry.setFromCurrency(missing[i].fromCurrency())
+//                entry.setToCurrency(missing[i].toCurrency())
+//                entry.setExchange(missing[i].getExchange())
+//                entry.setOpen(candlesticks.get(i).getOpen()
+//                entry.setClose(candlesticks.get(i).getClose()
+//                low, high
+//                entry.setAverage(averagePriceHistorical(high, low)
+//                entry.setVolumeFrom(
+//                entry.setVolumeTo(
+//
+//                switch period
+//                    cryptoMapper.updateDataDaily(entry)
+//                    ...
+//         */
+//        // Maps each candlestick object to a data object which will be used to update the database.
+//        // What if missing and candlesticks are different sizes?
+//        for (int i = 0; i < candlesticks.size(); i++) {
+//
+//            Data entry = new Data();
+//            Candlestick stick = candlesticks.get(i);
+//
+//            entry.setOpen(Double.parseDouble(stick.getOpen()));
+//            entry.setClose(Double.parseDouble(stick.getClose()));
+//            entry.setHigh(Double.parseDouble(stick.getHigh()));
+//            entry.setClose(Double.parseDouble(stick.getClose()));
+//            entry.setAverage(averagePriceHistorical(missing[i].getHigh(), missing[i].getLow()));
+//            // volumefrom & to?
+//
+//            switch (period) {
+//                case "day":
+//                    cryptoMapper.updateDataDaily(missing[i].getTime(), entry);
+//                    break;
+//                case "hour":
+//                    cryptoMapper.updateDataHourly(missing[i].getTime(), entry);
+//                    break;
+//                default:
+//                    cryptoMapper.updateDataMinutely(missing[i].getTime(), entry);
+//            }
+//        }
+//
+//        return new RootResponse(HttpStatus.OK, "Query successful.", cryptoMapper.getPriceDaily());
+//    }
 
 
     /**
@@ -484,7 +470,7 @@ public class CryptoCompareHistoricalService {
     public void aggregateWeekly(String fromCurrency, String toCurrency, String exchange) {
 
         int weeklyTimestamp = scheduledTasks.getTimestampWeekly();
-        int secInWeek = SEC_IN_MIN * MIN_IN_HOUR * HOURS_IN_DAY * 7;
+        int secInWeek = TimePeriod.SEC_IN_WEEK.getValue();
 
         cryptoMapper.aggregateWeekly(weeklyTimestamp - secInWeek, weeklyTimestamp, fromCurrency, toCurrency, exchange);
     }
@@ -495,6 +481,7 @@ public class CryptoCompareHistoricalService {
      */
     public RootResponse addSocial() {
 
+        String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
         int time = (int) (System.currentTimeMillis() / 1000);
         int[] currencyIds = {7605, 202330, 3808, 5031};
 
@@ -679,11 +666,11 @@ public class CryptoCompareHistoricalService {
 
         switch (period) {
             case "day":
-                return HOURS_IN_DAY * MIN_IN_HOUR * SEC_IN_MIN;
+                return TimePeriod.SEC_IN_DAY.getValue();
             case "hour":
-                return MIN_IN_HOUR * SEC_IN_MIN;
+                return TimePeriod.SEC_IN_HOUR.getValue();
             default:
-                return MIN_IN_HOUR;
+                return TimePeriod.SEC_IN_MIN.getValue();
         }
     }
 

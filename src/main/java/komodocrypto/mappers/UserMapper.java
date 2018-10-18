@@ -8,17 +8,17 @@ import java.util.ArrayList;
 @Mapper
 public interface UserMapper {
 
-    String GET_USERS = "SELECT * FROM `komodoDB`.`users`;";
+    String GET_USERS = "SELECT * FROM `komodo_crypto`.`users`;";
 
-    String UPDATE_USER = "UPDATE `komodoDB`.`users` SET `first_name` = #{first_name}, `last_name` = #{last_name}, `password` = #{password}, " +
+    String UPDATE_USER = "UPDATE `komodo_crypto`.`users` SET `first_name` = #{first_name}, `last_name` = #{last_name}, `password` = #{password}, " +
             "`email` = #{email} WHERE `user_id` = #{user_id};";
 
-    String CREATE_USER = "INSERT INTO `komodoDB`.`users` (`user_id`, `first_name`, `last_name`, `password`, `email`, `userSettings_id`) " +
+    String CREATE_USER = "INSERT INTO `komodo_crypto`.`users` (`user_id`, `first_name`, `last_name`, `password`, `email`, `userSettings_id`) " +
             "VALUES (#{user_id}, #{first_name}, #{last_name}, #{password}, #{email}, #{userSettings_id});";
 
-    String GET_USER_BY_ID = "SELECT * FROM `komodoDB`.`users` WHERE `user_id` = #{user_id};";
+    String GET_USER_BY_ID = "SELECT * FROM `komodo_crypto`.`users` WHERE `user_id` = #{user_id};";
 
-    String GET_USER_BY_FIRSTNAME_LASTNAME = "SELECT * FROM `komodoDB`.`users` WHERE `first_name` = #{arg0} AND last_name = #{arg1} " +
+    String GET_USER_BY_FIRSTNAME_LASTNAME = "SELECT * FROM `komodo_crypto`.`users` WHERE `first_name` = #{arg0} AND last_name = #{arg1} " +
             "ORDER BY created DESC limit 1;";
 
 

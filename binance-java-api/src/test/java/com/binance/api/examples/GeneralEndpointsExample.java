@@ -26,7 +26,7 @@ public class GeneralEndpointsExample {
     long serverTime = client.getServerTime();
     System.out.println(serverTime);
 
-    // Exchange info
+    // ExchangeData info
     ExchangeInfo exchangeInfo = client.getExchangeInfo();
     System.out.println(exchangeInfo.getTimezone());
     System.out.println(exchangeInfo.getSymbols());

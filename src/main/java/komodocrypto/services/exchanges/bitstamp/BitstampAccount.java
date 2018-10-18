@@ -35,7 +35,7 @@ public class BitstampAccount {
      * @throws ExchangeConnectionException if unable to connect to exchange
      */
     public BitstampBalance getBalance(Currency asset) throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         AccountService accountService = bitstamp.getAccountService();
@@ -70,7 +70,7 @@ public class BitstampAccount {
      * @throws ExchangeConnectionException if unable to connect to exchange
      */
     public List<FundingRecord> getTradeHistory() throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         AccountService accountService = bitstamp.getAccountService();
@@ -100,7 +100,7 @@ public class BitstampAccount {
      * @throws ExchangeConnectionException if unable to connect to exchange
      */
     public String makeWithdrawl(Currency asset, BigDecimal amount, String address) throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         AccountService accountService = bitstamp.getAccountService();
@@ -125,7 +125,7 @@ public class BitstampAccount {
      * @throws ExchangeConnectionException if unable to connect to exchange
      */
     public String getDepositAddress(Currency asset) throws ExchangeConnectionException {
-        // Create Exchange
+        // Create ExchangeData
         Exchange bitstamp = bitstampUtil.createExchange();
         // Connect to account
         AccountService accountService = bitstamp.getAccountService();

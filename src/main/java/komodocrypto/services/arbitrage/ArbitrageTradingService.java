@@ -1,9 +1,8 @@
 package komodocrypto.services.arbitrage;
 
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.account.NewOrderResponse;
-import com.binance.api.client.domain.account.NewOrderResponseType;
-import komodocrypto.configuration.exchange_utils.BinanceUtil;
+//import com.binance.api.client.BinanceApiRestClient;
+//import com.binance.api.client.domain.account.NewOrderResponse;
+//import com.binance.api.client.domain.account.NewOrderResponseType;
 import komodocrypto.configuration.exchange_utils.BitstampUtil;
 import komodocrypto.exceptions.custom_exceptions.ExchangeConnectionException;
 import komodocrypto.mappers.ArbitrageMapper;
@@ -28,7 +27,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.binance.api.client.domain.account.NewOrder.marketBuy;
+//import static com.binance.api.client.domain.account.NewOrder.marketBuy;
 
 @Service
 public class ArbitrageTradingService {
@@ -41,8 +40,8 @@ public class ArbitrageTradingService {
     @Autowired
     BitstampUtil bitstampUtil;
 
-    @Autowired
-    BinanceUtil binanceUtil;
+//    @Autowired
+//    BinanceUtil binanceUtil;
 
     public ArrayList<ArbitrageModel> getArbitrageData() {
         ArrayList<ArbitrageModel> ad = arbitrageMapper.getData();
@@ -59,84 +58,84 @@ public class ArbitrageTradingService {
         return user;
     }
 
-    public ArbitrageOutput makeMarketTrade(String exchangeHigh, String exchangeLow, String currencyPair,
-                                           BigDecimal amount) throws ExchangeConnectionException {
-        // Set metadata
-        ArbitrageOutput arbitrageTrade = new ArbitrageOutput();
-        arbitrageTrade.setExchangeHigh(exchangeHigh);
-        arbitrageTrade.setExchangeLow(exchangeLow);
-        arbitrageTrade.setCurrencyPair(currencyPair);
-        arbitrageTrade.setAmount(amount);
-
-        // Create list of trade data
-        List<TradeDetails> trades = new ArrayList<>();
-
-        // Make high trade
-        TradeDetails tradeHigh = tradeExchange(exchangeHigh, currencyPair, amount);
-
-        // Swap currency pair order then make low trade
-        String currencyPairLow = flipCurrencyPair(currencyPair);
-        TradeDetails tradeLow = tradeExchange(exchangeLow,currencyPairLow,amount);
-
-        trades.add(tradeHigh);
-        trades.add(tradeLow);
-        arbitrageTrade.setTradeDetails(trades);
-        return arbitrageTrade;
-    }
-
-    private TradeDetails tradeExchange(String exchange, String currencyPair, BigDecimal amount)
-            throws ExchangeConnectionException {
-        switch (exchange.toLowerCase()) {
-            case "bitstamp": {
-                // Connect to Exchange
-                Exchange bitstamp = bitstampUtil.createExchange();
-                TradeService tradeService = bitstamp.getTradeService();
-                TradeDetails trade = new TradeDetails();
-                trade.setExchange("Bitstamp");
-
-                // Place market order
-                MarketOrder marketOrder = convertXchangeTrade(currencyPair, amount);
-                logger.info("Attempting Bitstamp market order...");
-                try {
-                    String marketOrderReturnValue = tradeService.placeMarketOrder(marketOrder);
-                    trade.setTimestamp(System.currentTimeMillis());
-                    trade.setOrderId(marketOrderReturnValue);
-                    logger.info("Bitstamp order successfully placed.");
-                } catch (IOException e) {
-                    throw new ExchangeConnectionException("Unable to place order", HttpStatus.BAD_REQUEST);
-                }
-                return trade;
-            }
-            case "binance": {
-                // Connect to Exchange
-                BinanceApiRestClient client = binanceUtil.createExchange();
-                TradeDetails trade = new TradeDetails();
-                trade.setExchange("Binance");
-
-                // Place market order
-                logger.info("Attempting Binance market order...");
-                NewOrderResponse newOrderResponse = client.newOrder(
-                        marketBuy(currencyPair, amount.toString()).newOrderRespType(NewOrderResponseType.FULL));
-                trade.setTimestamp(System.currentTimeMillis());
-                trade.setOrderId(newOrderResponse.getClientOrderId());
-                logger.info("Binance order successfully placed.");
-                return trade;
-            }
-
-//            case "bittrex": {
+//    public ArbitrageOutput makeMarketTrade(String exchangeHigh, String exchangeLow, String currencyPair,
+//                                           BigDecimal amount) throws ExchangeConnectionException {
+//        // Set metadata
+//        ArbitrageOutput arbitrageTrade = new ArbitrageOutput();
+//        arbitrageTrade.setExchangeHigh(exchangeHigh);
+//        arbitrageTrade.setExchangeLow(exchangeLow);
+//        arbitrageTrade.setCurrencyPair(currencyPair);
+//        arbitrageTrade.setAmount(amount);
 //
-//            }
-//            case "kraken": {
+//        // Create list of trade data
+//        List<TradeDetails> trades = new ArrayList<>();
 //
-//            }
-//            case "gdax": {
+//        // Make high trade
+//        TradeDetails tradeHigh = tradeExchange(exchangeHigh, currencyPair, amount);
 //
-//            }
-            default:
-                throw new ExchangeConnectionException("Invalid Exchange", HttpStatus.BAD_REQUEST);
-        }
+//        // Swap currency pair order then make low trade
+//        String currencyPairLow = flipCurrencyPair(currencyPair);
+//        TradeDetails tradeLow = tradeExchange(exchangeLow,currencyPairLow,amount);
+//
+//        trades.add(tradeHigh);
+//        trades.add(tradeLow);
+//        arbitrageTrade.setTradeDetails(trades);
+//        return arbitrageTrade;
+//    }
 
-    }
+//    private TradeDetails tradeExchange(String exchange, String currencyPair, BigDecimal amount)
+//            throws ExchangeConnectionException {
+//        switch (exchange.toLowerCase()) {
+//            case "bitstamp": {
+//                // Connect to ExchangeData
+//                ExchangeData bitstamp = bitstampUtil.createExchange();
+//                TradeService tradeService = bitstamp.getTradeService();
+//                TradeDetails trade = new TradeDetails();
+//                trade.setExchange("Bitstamp");
+//
+//                // Place market order
+//                MarketOrder marketOrder = convertXchangeTrade(currencyPair, amount);
+//                logger.info("Attempting Bitstamp market order...");
+//                try {
+//                    String marketOrderReturnValue = tradeService.placeMarketOrder(marketOrder);
+//                    trade.setTimestamp(System.currentTimeMillis());
+//                    trade.setOrderId(marketOrderReturnValue);
+//                    logger.info("Bitstamp order successfully placed.");
+//                } catch (IOException e) {
+//                    throw new ExchangeConnectionException("Unable to place order", HttpStatus.BAD_REQUEST);
+//                }
+//                return trade;
+//            }
+//            case "binance": {
+//                // Connect to ExchangeData
+//                BinanceApiRestClient client = binanceUtil.createExchange();
+//                TradeDetails trade = new TradeDetails();
+//                trade.setExchange("Binance");
+//
+//                // Place market order
+//                logger.info("Attempting Binance market order...");
+//                NewOrderResponse newOrderResponse = client.newOrder(
+//                        marketBuy(currencyPair, amount.toString()).newOrderRespType(NewOrderResponseType.FULL));
+//                trade.setTimestamp(System.currentTimeMillis());
+//                trade.setOrderId(newOrderResponse.getClientOrderId());
+//                logger.info("Binance order successfully placed.");
+//                return trade;
+//            }
+//
+////            case "bittrex": {
+////
+////            }
+////            case "kraken": {
+////
+////            }
+////            case "gdax": {
+////
+////            }
+//            default:
+//                throw new ExchangeConnectionException("Invalid ExchangeData", HttpStatus.BAD_REQUEST);
+//        }
+//
+//    }
 
     private MarketOrder convertXchangeTrade(String currencyPair, BigDecimal amount)
             throws ExchangeConnectionException {
