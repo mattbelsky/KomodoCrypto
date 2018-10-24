@@ -1,6 +1,7 @@
 package komodocrypto.services.arbitrage;
 
 import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
+import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
 import komodocrypto.mappers.ArbitrageMapper;
 import komodocrypto.mappers.database.CurrencyMapper;
 import komodocrypto.mappers.exchanges.ExchangeMapper;
@@ -8,6 +9,7 @@ import komodocrypto.mappers.exchanges.ExchangeWalletMapper;
 import komodocrypto.model.arbitrage.ArbitrageModel;
 import komodocrypto.services.exchanges.ExchangeService;
 import komodocrypto.services.trades.TradeService;
+import org.apache.ibatis.jdbc.Null;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Ticker;
@@ -109,7 +111,7 @@ public class ArbitrageScanningService {
      * @throws IOException
      */
 //    @Async
-    public Exchange[] getBestArbitrageExchangesForPair(CurrencyPair currencyPair) throws IOException {
+    public Exchange[] getBestArbitrageExchangesForPair(CurrencyPair currencyPair) throws IOException, TableEmptyException {
 
         // An array that will contain the highest and lowest price for a given coin
         // [0] is for the highest, [1] for the lowest
@@ -132,65 +134,67 @@ public class ArbitrageScanningService {
             logger.info("Scanning " + ex.getExchangeSpecification().getExchangeName()
                     + " for " + cp + " . . . ");
 
-            try {
+            //Get the given market last price for the given pair
+            marketDataService = ex.getMarketDataService();
+            currentTicker = marketDataService.getTicker(currencyPair);
+            logger.info("Bid|Ask: " + currentTicker.getBid() + " - " + currentTicker.getAsk());
 
-                //Get the given market last price for the given pair
-                marketDataService = ex.getMarketDataService();
-                currentTicker = marketDataService.getTicker(currencyPair);
-                logger.info("Bid|Ask: " + currentTicker.getBid() + " - " + currentTicker.getAsk());
+            //If it's the first exchange to compare...
+            if (exchangeArray[0] == null && exchangeArray[1] == null) {
 
-                //If it's the first exchange to compare...
-                if (exchangeArray[0] == null && exchangeArray[1] == null) {
+                exchangeArray[0] = ex;
+                exchangeArray[1] = ex;
+                highestBid  = currentTicker.getBid();
+                lowestAsk   = currentTicker.getAsk();
 
-                    exchangeArray[0] = ex;
-                    exchangeArray[1] = ex;
-                    highestBid  = currentTicker.getBid();
-                    lowestAsk   = currentTicker.getAsk();
-
-                }
-                //Compare to the highest and lowest priced exchange and replace them if necessary
-                else if (currentTicker.getBid().compareTo(highestBid) == 1){
-
-                    highestBid = currentTicker.getBid();
-                    exchangeArray[0] = ex;
-
-                } else if (currentTicker.getAsk().compareTo(lowestAsk) == -1){
-
-                    lowestAsk = currentTicker.getAsk();
-                    exchangeArray[1] = ex;
-                }
-
-            } catch (Exception e) {
-
-                logger.info("N/A");
-                continue;
             }
+            //Compare to the highest and lowest priced exchange and replace them if necessary
+            else if (currentTicker.getBid().compareTo(highestBid) == 1){
+
+                highestBid = currentTicker.getBid();
+                exchangeArray[0] = ex;
+
+            } else if (currentTicker.getAsk().compareTo(lowestAsk) == -1){
+
+                lowestAsk = currentTicker.getAsk();
+                exchangeArray[1] = ex;
+            }
+        }
+
+        // Throws an exception if each element of the exchange array is empty before continuing to execute.
+        if (exchangeArray[0] == null && exchangeArray[1] == null) {
+
+            String message = "No exchange supports the trading pair " + cp;
+            logger.error(message);
+            throw new TableEmptyException(message, HttpStatus.NO_CONTENT);
         }
 
         // Creates arbitrage model object and persists arbitrage data into the database.
         // POSSIBLE TIME WASTING BOTTLENECK HERE!
+
+        // Gets the timestamp from the ticker. If the ticker contains no timestamp, uses the current time.
+        Timestamp ts = new Timestamp(System.currentTimeMillis());
+
         try {
-
-            // What if the timestamp is null?
-            Timestamp ts = new Timestamp(currentTicker.getTimestamp().getTime());
-
-            // TODO Find out why this is being skipped.
-            ArbitrageModel arbitrageData = new ArbitrageModel();
-            arbitrageData.setTimestamp(ts);
-            arbitrageData.setCurrencyPair(cp);
-            arbitrageData.setHighBid(highestBid);
-            arbitrageData.setLowAsk(lowestAsk);
-            arbitrageData.setDifference(highestBid.subtract(lowestAsk));
-
-            arbitrageMapper.addArbitrageData(arbitrageData);
-
-            logger.info("Highest priced bid -> " + exchangeArray[0].getExchangeSpecification().getExchangeName()
-                    + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getBid());
-            logger.info("Lowest priced ask -> " + exchangeArray[1].getExchangeSpecification().getExchangeName()
-                    + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getAsk());
+            ts.setTime(currentTicker.getTimestamp().getTime());
         } catch (NullPointerException e) {
-            logger.error("Exchange doesn't support currency pair.");
+            logger.error("Current ticker contains a null timestamp. Current system time used instead.");
         }
+
+        ArbitrageModel arbitrageData = new ArbitrageModel();
+        arbitrageData.setTimestamp(ts);
+        arbitrageData.setCurrencyPair(cp);
+        arbitrageData.setDifference(highestBid.subtract(lowestAsk));
+        arbitrageData.setHighBid(highestBid);
+        arbitrageData.setLowAsk(lowestAsk);
+        arbitrageData.setHighBidExchange(exchangeArray[0].getExchangeSpecification().getExchangeName());
+        arbitrageData.setLowAskExchange(exchangeArray[1].getExchangeSpecification().getExchangeName());
+        arbitrageMapper.addArbitrageData(arbitrageData);
+
+        logger.info("Highest priced bid -> " + exchangeArray[0].getExchangeSpecification().getExchangeName()
+                + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getBid());
+        logger.info("Lowest priced ask -> " + exchangeArray[1].getExchangeSpecification().getExchangeName()
+                + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getAsk());
 
         return exchangeArray;
     }
@@ -209,7 +213,7 @@ public class ArbitrageScanningService {
             return false;
     }
 
-    public String[] getExchangeNames(CurrencyPair currencyPair) throws IOException {
+    public String[] getExchangeNames(CurrencyPair currencyPair) throws IOException, TableEmptyException {
 
         Exchange[] exchanges = getBestArbitrageExchangesForPair(currencyPair);
         String[] exchangeNames = new String[2];

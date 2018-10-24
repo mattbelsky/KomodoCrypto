@@ -36,7 +36,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = TableEmptyException.class)
     protected @ResponseBody
     RootResponse tableEmptyError(TableEmptyException ex) {
-        return new RootResponse(HttpStatus.valueOf(ex.getStatus()), ex.getMessage(), null);
+        return new RootResponse(ex.getStatus(), ex.getMessage(), null);
     }
 
     /**

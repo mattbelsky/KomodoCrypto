@@ -1,5 +1,6 @@
 package komodocrypto.controllers.api;
 
+import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
 import komodocrypto.mappers.database.ClientPortfolioMapper;
 import komodocrypto.mappers.database.GroupPortfolioMapper;
 import komodocrypto.model.RootResponse;
@@ -39,7 +40,8 @@ public class ArbitrageController {
 
     @GetMapping("/arbitrageopportunities")
     public RootResponse getCurrentArbitrageOpportunities(@RequestParam("from") String from,
-                                                         @RequestParam("to") String to) throws IOException {
+                                                         @RequestParam("to") String to)
+            throws IOException, TableEmptyException {
         return new RootResponse(HttpStatus.OK, "Current arbitrage opportunities for pair " + from + "/" + to + ".",
                 arbitrageScanningService.getExchangeNames(new CurrencyPair(from, to)));
     }

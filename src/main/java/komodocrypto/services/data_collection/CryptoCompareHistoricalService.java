@@ -585,7 +585,7 @@ public class CryptoCompareHistoricalService {
         // Throws an exception if the news table is empty.
         if (cryptoMapper.getNews().length == 0) {
 
-            throw new TableEmptyException(204, "No data found");
+            throw new TableEmptyException("No data found", HttpStatus.NO_CONTENT);
 
         } else /*if (categories == null)*/{
 

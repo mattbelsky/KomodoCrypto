@@ -1,20 +1,14 @@
 package komodocrypto.exceptions.custom_exceptions;
 
+import org.springframework.http.HttpStatus;
+
 public class TableEmptyException extends Exception {
 
-    int status;
-    String message;
+    private String message;
+    private HttpStatus status;
 
-    public TableEmptyException(int status, String message) {
-        this.status = status;
+    public TableEmptyException(String message, HttpStatus status) {
         this.message = message;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
         this.status = status;
     }
 
@@ -23,7 +17,7 @@ public class TableEmptyException extends Exception {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public HttpStatus getStatus() {
+        return status;
     }
 }

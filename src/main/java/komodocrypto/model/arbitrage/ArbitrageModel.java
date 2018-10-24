@@ -10,9 +10,9 @@ public class ArbitrageModel {
     private String currencyPair;
     private BigDecimal difference;
     private BigDecimal lowAsk;
-    private BigDecimal lowAskExchange;
+    private String lowAskExchange;
     private BigDecimal highBid;
-    private BigDecimal highBidExchange;
+    private String highBidExchange;
 
     public int getId() {
         return id;
@@ -54,11 +54,11 @@ public class ArbitrageModel {
         this.lowAsk = lowAsk;
     }
 
-    public BigDecimal getLowAskExchange() {
+    public String getLowAskExchange() {
         return lowAskExchange;
     }
 
-    public void setLowAskExchange(BigDecimal lowAskExchange) {
+    public void setLowAskExchange(String lowAskExchange) {
         this.lowAskExchange = lowAskExchange;
     }
 
@@ -70,11 +70,11 @@ public class ArbitrageModel {
         this.highBid = highBid;
     }
 
-    public BigDecimal getHighBidExchange() {
+    public String getHighBidExchange() {
         return highBidExchange;
     }
 
-    public void setHighBidExchange(BigDecimal highBidExchange) {
+    public void setHighBidExchange(String highBidExchange) {
         this.highBidExchange = highBidExchange;
     }
 }
