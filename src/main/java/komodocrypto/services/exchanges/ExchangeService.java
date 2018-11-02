@@ -5,23 +5,35 @@ import komodocrypto.mappers.exchanges.ExchangeMapper;
 import komodocrypto.model.database.CurrencyPairs;
 import komodocrypto.model.exchanges.ExchangeData;
 import komodocrypto.model.exchanges.ExchangeNames;
+import komodocrypto.services.ConfigurationService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
+import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.bitstamp.BitstampExchange;
 import org.knowm.xchange.bittrex.BittrexExchange;
 import org.knowm.xchange.coinbase.v2.CoinbaseExchange;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.kraken.KrakenExchange;
+import org.knowm.xchange.service.account.AccountService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class ExchangeService {
+
+    Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    ConfigurationService configurationService;
 
     @Autowired
     ExchangeMapper exchangeMapper;
@@ -30,6 +42,7 @@ public class ExchangeService {
     CurrencyPairsMapper currencyPairsMapper;
 
     // Generates a list of exchanges from the database that the application is using.
+    @Cacheable("ExchangesList")
     public ArrayList<Exchange> generateDefaultExchangeList() {
 
         // The list of ExchangeData objects to return
@@ -84,5 +97,51 @@ public class ExchangeService {
         }
 
         return pairsList;
+    }
+
+    public Exchange createExchange(String exchangeName) {
+
+        // Checks if the specified exchange is supported by this application.
+        // TODO Handle this better.
+        ArrayList<String> exchangeNamesList = exchangeMapper.getExchangeNames();
+        if (!exchangeNamesList.contains(exchangeName)) {
+            logger.error(exchangeName + " is not supported by this application.");
+            return null;
+        }
+
+        ExchangeSpecification exSpec;
+
+        switch (exchangeName.toLowerCase()) {
+
+            case "binance":
+                exSpec = new BinanceExchange().getDefaultExchangeSpecification();
+                exSpec.setApiKey(configurationService.getBinanceApiKey());
+                exSpec.setSecretKey(configurationService.getBinanceSecretKey());
+                break;
+
+            case "bittrex":
+                exSpec = new BittrexExchange().getDefaultExchangeSpecification();
+                exSpec.setUserName(configurationService.getBittrexUsername());
+                exSpec.setApiKey(configurationService.getBittrexApiKey());
+                exSpec.setSecretKey(configurationService.getBittrexSecretKey());
+                break;
+
+            // Default is Coinbase.
+            default:
+                exSpec = new CoinbaseExchange().getDefaultExchangeSpecification();
+                exSpec.setApiKey(configurationService.getCoinbaseApiKey());
+                exSpec.setSecretKey(configurationService.getCoinbaseSecretKey());
+                break;
+        }
+
+        Exchange exchange = ExchangeFactory.INSTANCE.createExchange(exSpec);
+        return exchange;
+    }
+
+    public String getAccountInfo(Exchange exchange) throws IOException {
+
+        AccountService accountService = exchange.getAccountService();
+        AccountInfo accountInfo = accountService.getAccountInfo();
+        return accountInfo.toString();
     }
 }

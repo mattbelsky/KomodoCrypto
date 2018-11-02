@@ -3,7 +3,6 @@ package komodocrypto.services.arbitrage;
 //import com.binance.api.client.BinanceApiRestClient;
 //import com.binance.api.client.domain.account.NewOrderResponse;
 //import com.binance.api.client.domain.account.NewOrderResponseType;
-import komodocrypto.configuration.exchange_utils.BitstampUtil;
 import komodocrypto.exceptions.custom_exceptions.ExchangeConnectionException;
 import komodocrypto.mappers.ArbitrageMapper;
 import komodocrypto.model.arbitrage.ArbitrageModel;
@@ -36,9 +35,6 @@ public class ArbitrageTradingService {
 
     @Autowired
     ArbitrageMapper arbitrageMapper;
-
-    @Autowired
-    BitstampUtil bitstampUtil;
 
 //    @Autowired
 //    BinanceUtil binanceUtil;

@@ -34,6 +34,12 @@ public class ArbitrageScanningService {
     ExchangeService exchangeService;
 
     @Autowired
+    TradeService tradeService;
+
+    @Autowired
+    ArbitrageMapper arbitrageMapper;
+
+    @Autowired
     ExchangeWalletMapper exchangeWalletMapper;
 
     @Autowired
@@ -41,15 +47,6 @@ public class ArbitrageScanningService {
 
     @Autowired
     CurrencyMapper currencyMapper;
-
-    @Autowired
-    TradeService tradeService;
-
-    @Autowired
-    ArbitrageMapper arbitrageMapper;
-
-    @Autowired
-    CoinSpreadTracking coinSpreadTracking;
 
     // Cycles through each currency pair one second after the previous execution has finished and finds the two most
     // ideal exchanges for an arbitrage trade.
@@ -111,10 +108,11 @@ public class ArbitrageScanningService {
      * @throws IOException
      */
 //    @Async
+    // TODO What if currency pair is trending downward?
     public Exchange[] getBestArbitrageExchangesForPair(CurrencyPair currencyPair) throws IOException, TableEmptyException {
 
-        // An array that will contain the highest and lowest price for a given coin
-        // [0] is for the highest, [1] for the lowest
+        // The exchanges to sell and buy from
+        // [0] is the exchange to sell from, [1] is the one to buy from
         Exchange[] exchangeArray = new Exchange[2];
 
         // TODO See if this can be executed and cached on startup, as this is a time waster here.
@@ -165,8 +163,8 @@ public class ArbitrageScanningService {
         if (exchangeArray[0] == null && exchangeArray[1] == null) {
 
             String message = "No exchange supports the trading pair " + cp;
-            logger.error(message);
-            throw new TableEmptyException(message, HttpStatus.NO_CONTENT);
+            logger.warn(message);
+            throw new TableEmptyException(message, HttpStatus.BAD_REQUEST);
         }
 
         // Creates arbitrage model object and persists arbitrage data into the database.
@@ -207,18 +205,32 @@ public class ArbitrageScanningService {
      */
 
     public boolean doesExchangeSupportCurrency(Exchange ex, CurrencyPair currencyPair){
+
         if(ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair))
             return true;
         else
             return false;
     }
 
+    /**
+     * Gets the names of the exchanges that offer the best arbitrage opportunity for the given currency pair.
+     * @param currencyPair -- the currency pair to query for best arbitrage opportunity
+     * @return the names of the exchanges in string form
+     * @throws IOException
+     * @throws TableEmptyException
+     */
     public String[] getExchangeNames(CurrencyPair currencyPair) throws IOException, TableEmptyException {
 
         Exchange[] exchanges = getBestArbitrageExchangesForPair(currencyPair);
         String[] exchangeNames = new String[2];
         exchangeNames[0] = exchanges[0].getExchangeSpecification().getExchangeName();
         exchangeNames[1] = exchanges[1].getExchangeSpecification().getExchangeName();
+
+        // Are there no arbitrage opportunities between exchanges? In other words, does a single exchange contain both
+        // the highest and lowest bids?
+        if (exchangeNames[0].equals(exchangeNames[1])) {
+            // TODO Figure out how to handle this.
+        }
 
         return exchangeNames;
     }

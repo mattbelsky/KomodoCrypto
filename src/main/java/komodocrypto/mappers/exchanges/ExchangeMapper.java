@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Mapper
@@ -20,6 +21,9 @@ public interface ExchangeMapper {
             @Result(property = "sellFee", column = "sell_fee")
     })
     public List<ExchangeData> getExchanges();
+
+    @Select("SELECT `exchange_name` FROM `komodo_crypto`.`exchanges`;")
+    public ArrayList<String> getExchangeNames();
 
     @Select("SELECT `id` FROM `komodo_crypto`.`exchanges` WHERE `exchange_name` = #{exchangeName};")
     public int getExchangeIdByName(String exchangeName);

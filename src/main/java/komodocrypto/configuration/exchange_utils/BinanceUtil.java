@@ -1,17 +1,19 @@
-//package komodocrypto.configuration.exchange_utils;
-//
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.stereotype.Component;
-//
-//@Component
-//public class BinanceUtil {
-//
-//    @Value("${binance.apiKey}")
-//    private String apiKey;
-//
-//    @Value("${binance.secretKey}")
-//    private String secretKey;
-//
+package komodocrypto.configuration.exchange_utils;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BinanceUtil {
+
+    @Value("${binance.apiKey}")
+    private String apiKey;
+
+    @Value("${binance.secretKey}")
+    private String secretKey;
+
+
+
 //    /**
 //     * Rest API: a synchronous/blocking Binance API client
 //     *
@@ -51,4 +53,4 @@
 //        BinanceApiClientFactory factory = BinanceApiClientFactory.newInstance(apiKey,secretKey);
 //        return factory.newWebSocketClient();
 //    }
-//}
+}

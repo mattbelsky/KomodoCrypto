@@ -1,43 +1,44 @@
-//package komodocrypto.controllers;
-//
+package komodocrypto.controllers;
+
 //import com.binance.api.client.domain.account.Account;
 //import com.binance.api.client.domain.account.DepositAddress;
 //import com.binance.api.client.domain.account.WithdrawResult;
 //import com.binance.api.client.domain.market.BookTicker;
 //import com.binance.api.client.domain.market.Candlestick;
 //import com.binance.api.client.domain.market.TickerPrice;
-//import komodocrypto.exceptions.custom_exceptions.ExchangeConnectionException;
-//import komodocrypto.model.RootResponse;
-//import komodocrypto.model.exchanges.BitstampBalance;
 //import komodocrypto.services.exchanges.binance.BinanceAccount;
 //import komodocrypto.services.exchanges.binance.BinanceTicker;
 //import komodocrypto.services.exchanges.binance.BinanceTradeImpl;
 //import komodocrypto.services.exchanges.bitstamp.BitstampAccount;
 //import komodocrypto.services.exchanges.bitstamp.BitstampTicker;
 //import komodocrypto.services.exchanges.bitstamp.BitstampTradeImpl;
-//import komodocrypto.services.exchanges.bittrex.BittrexAccount;
-//import komodocrypto.services.exchanges.bittrex.BittrexTicker;
-//import komodocrypto.services.exchanges.bittrex.BittrexTradeImpl;
-//import org.knowm.xchange.bittrex.dto.account.BittrexBalance;
-//import org.knowm.xchange.currency.Currency;
-//import org.knowm.xchange.currency.CurrencyPair;
-//import org.knowm.xchange.dto.Order;
-//import org.knowm.xchange.dto.account.AccountInfo;
-//import org.knowm.xchange.dto.account.Balance;
-//import org.knowm.xchange.dto.account.FundingRecord;
-//import org.knowm.xchange.dto.marketdata.Ticker;
-//import org.knowm.xchange.dto.trade.OpenOrders;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.web.bind.annotation.*;
-//
-//import javax.ws.rs.QueryParam;
-//import java.io.IOException;
-//import java.math.BigDecimal;
-//import java.util.List;
-//import java.util.Map;
-//
-//@RestController
-//public class ExchangeController {
+import komodocrypto.services.exchanges.ExchangeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+
+@RestController
+public class ExchangeController {
+
+    @Autowired
+    ExchangeService exchangeService;
+
+    @GetMapping("/binance/account")
+    public String getBinanceAccountInfo() throws IOException {
+        return exchangeService.getAccountInfo(exchangeService.createExchange("Binance"));
+    }
+
+    @GetMapping("/bittrex/account")
+    public String getBittrexAccountInfo() throws IOException {
+        return exchangeService.getAccountInfo(exchangeService.createExchange("Bittrex"));
+    }
+
+    @GetMapping("/coinbase/account")
+    public String getCoinbaseAccountInfo() throws IOException {
+        return exchangeService.getAccountInfo(exchangeService.createExchange("Coinbase"));
+    }
+
 //
 //
 //    //=========================== Binance exchange ==============================
@@ -153,12 +154,12 @@
 //                                   @RequestParam(value = "id") Long orderId) {
 //        binanceTrade.cancelOrder(pair, orderId);
 //    }
-//
-////    @GetMapping("/binance/backfill")
-////    public List<Candlestick> getHistoricalCandlestick(@RequestParam(value = "pair") String pair) {
-////        return binanceTicker.getHistorical(pair);
-//    }
-//
+
+//    @GetMapping("/binance/backfill")
+//    public List<Candlestick> getHistoricalCandlestick(@RequestParam(value = "pair") String pair) {
+//        return binanceTicker.getHistorical(pair);
+    }
+
 //    //=========================== Bitstamp exchange ==============================
 //
 //    /**
