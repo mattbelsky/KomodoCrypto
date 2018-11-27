@@ -12,17 +12,38 @@ package komodocrypto.controllers;
 //import komodocrypto.services.exchanges.bitstamp.BitstampAccount;
 //import komodocrypto.services.exchanges.bitstamp.BitstampTicker;
 //import komodocrypto.services.exchanges.bitstamp.BitstampTradeImpl;
+import komodocrypto.model.RootResponse;
+import komodocrypto.model.TradeModel;
 import komodocrypto.services.exchanges.ExchangeService;
+import komodocrypto.services.trades.BaseTradeService;
+import org.knowm.xchange.Exchange;
+import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.marketdata.Ticker;
+import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
+import org.knowm.xchange.dto.trade.MarketOrder;
+import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 public class ExchangeController {
 
     @Autowired
     ExchangeService exchangeService;
+
+    @Autowired
+    @Qualifier("BaseTradeService")
+    BaseTradeService baseTradeService;
 
     @GetMapping("/binance/account")
     public String getBinanceAccountInfo() throws IOException {
@@ -34,9 +55,89 @@ public class ExchangeController {
         return exchangeService.getAccountInfo(exchangeService.createExchange("Bittrex"));
     }
 
-    @GetMapping("/coinbase/account")
+    @GetMapping("/coinbasepro/account")
     public String getCoinbaseAccountInfo() throws IOException {
-        return exchangeService.getAccountInfo(exchangeService.createExchange("Coinbase"));
+        return exchangeService.getAccountInfo(exchangeService.createExchange("CoinbasePro"));
+    }
+
+    @GetMapping("/ticker/{exchange}")
+    public List<Ticker> getTicker(@PathVariable("exchange") String exchangeName,
+                            @RequestParam(value = "base", required = false) String base,
+                            @RequestParam(value = "counter", required = false) String counter) throws IOException {
+
+        MarketDataService marketDataService = exchangeService.createExchange(exchangeName).getMarketDataService();
+
+        if (base == null || counter == null)
+            return marketDataService.getTickers(null);
+        else {
+            ArrayList<Ticker> tickers = new ArrayList<>();
+            tickers.add(marketDataService.getTicker(new CurrencyPair(base, counter)));
+            return tickers;
+        }
+    }
+
+    @PostMapping("/trade/market")
+    public RootResponse makeMarketTrade(@RequestParam("exchange") String exchange,
+                                        @RequestParam("base") String base,
+                                        @RequestParam("counter") String counter,
+                                        @RequestParam("amount") double amount,
+                                        @RequestParam("ordertype") String orderType)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, IOException {
+
+        TradeModel tradeModel = baseTradeService.buildTradeModel(exchange, base, counter, amount, orderType);
+        MarketOrder marketOrder = baseTradeService.buildMarketOrder(tradeModel);
+        baseTradeService.makeMarketTrade(tradeModel, marketOrder);
+
+        return new RootResponse(HttpStatus.OK, "Market order successfully placed.", null);
+    }
+
+    @PostMapping("/transfer")
+    public RootResponse transferFunds(@RequestParam("fromexchange") String fromExchange,
+                                      @RequestParam("toexchange") String toExchange,
+                                      @RequestParam("currency") String currency,
+                                      @RequestParam("amount") double amount) {
+
+        return null;
+    }
+
+    //-----------FOR TESTING PURPOSES------------//
+
+    @GetMapping("/{exchange}/currencypairs")
+    public HashMap<String, List<String>> getSupportedCurrencyPairs(@PathVariable("exchange") String exchangeName) {
+
+        HashMap<String, List<String>> currencyPairs = new HashMap<>();
+
+        if (exchangeName.equals("all")) {
+
+            List<Exchange> exchanges = exchangeService.generateExchangesList();
+
+            for (Exchange e : exchanges) {
+
+                String name = e.getExchangeSpecification().getExchangeName();
+                List<String> pairs = getCurrencyPairByExchange(e);
+                currencyPairs.put(name, pairs);
+            }
+
+        } else {
+
+            Exchange e = exchangeService.createExchange(exchangeName);
+            String name = e.getExchangeSpecification().getExchangeName();
+            List<String> pairs = getCurrencyPairByExchange(e);
+            currencyPairs.put(name, pairs);
+        }
+
+        return currencyPairs;
+    }
+
+    private List<String> getCurrencyPairByExchange(Exchange exchange) {
+
+        Map<CurrencyPair, CurrencyPairMetaData> cpMeta = exchange.getExchangeMetaData().getCurrencyPairs();
+        List<String> currencyPair = cpMeta
+                .keySet()
+                .stream()
+                .map(cp -> cp.toString())
+                .collect(Collectors.toList());
+        return currencyPair;
     }
 
 //

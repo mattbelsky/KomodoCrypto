@@ -115,37 +115,37 @@
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-core</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-examples</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-binance</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-bitstamp</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-bittrex</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
-			<artifactId>xchange-coinbase</artifactId>
-			<version>4.3.11</version>
+			<artifactId>xchange-coinbasepro</artifactId>
+			<version>4.3.12</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchange</groupId>
 			<artifactId>xchange-kraken</artifactId>
-			<version>4.3.11</version>
+			<version>4.3.12</version>
 		</dependency>
 
 		<dependency>

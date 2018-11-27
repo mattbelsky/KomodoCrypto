@@ -2,5 +2,5 @@ package komodocrypto.model.exchanges;
 
 public enum ExchangeNames {
 
-    Binance, Bitstamp, Bittrex, Kraken, Coinbase;
+    Binance, Bittrex, Coinbase;
 }

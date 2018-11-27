@@ -16,7 +16,13 @@ public interface CurrencyPairsMapper {
     String GET_ALL_DATA =   "SELECT * FROM `komodo_crypto`.`currency_pairs`;";
 
     @Select(GET_ALL_DATA)
-    @Results(@Result(property = "currencyPairId", column = "currency_pair_id"))
+    @Results(value = {
+            @Result(property = "id", column = "id"),
+            @Result(property = "currencyIdBase", column = "currency_id_1"),
+            @Result(property = "currencyIdCounter", column = "currency_id_2"),
+            @Result(property = "currencySymbolBase", column = "currency_symbol_1"),
+            @Result(property = "currencySymbolCounter", column = "currency_symbol_2")
+    })
     public List<CurrencyPairs> getAllCurrencyPairs();
 
     @Select(GET_CURRENCY_PAIR_ID_BY_CURRENCY_ID)

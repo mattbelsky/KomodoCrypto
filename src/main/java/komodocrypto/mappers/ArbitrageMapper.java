@@ -11,18 +11,18 @@ public interface ArbitrageMapper {
     @Select("SELECT * FROM `komodo_crypto`.`arbitrage_opportunities`;")
     @Results(id = "ArbitrageModelResultMap", value = {
             @Result(property = "timestamp", column = "timestamp"),
-            @Result(property = "currencyPair", column = "currency_pair"),
+            @Result(property = "currencyPairName", column = "currency_pair"),
             @Result(property = "difference", column = "difference"),
             @Result(property = "lowAsk", column = "low_ask"),
             @Result(property = "highBid", column = "high_bid"),
-            @Result(property = "lowAskExchange", column = "low_ask_exchange"),
-            @Result(property = "highBidExchange", column = "high_bid_exchange")
+            @Result(property = "lowAskExchangeName", column = "low_ask_exchange"),
+            @Result(property = "highBidExchangeName", column = "high_bid_exchange")
     })
     public ArrayList<ArbitrageModel> getData();
 
     @Insert("INSERT INTO `komodo_crypto`.`arbitrage_opportunities` " +
             "(`timestamp`, `currency_pair`, `difference`, `low_ask`, `high_bid`, `low_ask_exchange`, `high_bid_exchange`) " +
-            "VALUES (#{timestamp}, #{currencyPair}, #{difference}, #{lowAsk}, #{highBid}, #{lowAskExchange}, #{highBidExchange});")
+            "VALUES (#{timestamp}, #{currencyPairName}, #{difference}, #{lowAsk}, #{highBid}, #{lowAskExchangeName}, #{highBidExchangeName});")
     public int addArbitrageData(ArbitrageModel arbitrageOppData);
     
 }

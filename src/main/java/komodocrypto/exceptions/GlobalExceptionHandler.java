@@ -17,9 +17,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(value = Exception.class)
+    protected @ResponseBody RootResponse error(Exception ex) {
+        return new RootResponse(ex.getMessage(), null);
+    }
+
     @ExceptionHandler(value = ClientException.class)
-    protected @ResponseBody
-    RootResponse clientError(ClientException ex) {
+    protected @ResponseBody RootResponse clientError(ClientException ex) {
         return new RootResponse(ex.getStatus(), ex.getMessage(), null);
     }
 
@@ -34,8 +38,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(value = TableEmptyException.class)
-    protected @ResponseBody
-    RootResponse tableEmptyError(TableEmptyException ex) {
+    protected @ResponseBody RootResponse tableEmptyError(TableEmptyException ex) {
         return new RootResponse(ex.getStatus(), ex.getMessage(), null);
     }
 

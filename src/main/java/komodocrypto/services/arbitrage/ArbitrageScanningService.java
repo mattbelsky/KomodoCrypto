@@ -1,6 +1,5 @@
 package komodocrypto.services.arbitrage;
 
-import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
 import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
 import komodocrypto.mappers.ArbitrageMapper;
 import komodocrypto.mappers.database.CurrencyMapper;
@@ -8,8 +7,7 @@ import komodocrypto.mappers.exchanges.ExchangeMapper;
 import komodocrypto.mappers.exchanges.ExchangeWalletMapper;
 import komodocrypto.model.arbitrage.ArbitrageModel;
 import komodocrypto.services.exchanges.ExchangeService;
-import komodocrypto.services.trades.TradeService;
-import org.apache.ibatis.jdbc.Null;
+import komodocrypto.services.trades.BaseTradeService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Ticker;
@@ -17,13 +15,15 @@ import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ArbitrageScanningService {
@@ -34,7 +34,8 @@ public class ArbitrageScanningService {
     ExchangeService exchangeService;
 
     @Autowired
-    TradeService tradeService;
+    @Qualifier("BaseTradeService")
+    BaseTradeService tradeService;
 
     @Autowired
     ArbitrageMapper arbitrageMapper;
@@ -52,141 +53,149 @@ public class ArbitrageScanningService {
     // ideal exchanges for an arbitrage trade.
     // For testing purposes, this method also indicates how long the scanning service takes to complete.
 //    @Scheduled(fixedDelay = 5000)
-    public void scanExchangesByPair() throws Exception {
-
-        ArrayList<CurrencyPair> pairsList = exchangeService.generateCurrencyPairList();
-
-        for (CurrencyPair cp : pairsList) {
-
-            String pairString = cp.toString();
-            logger.info("Starting arbitrage service for pair " + pairString + ".");
-            long startTimeArbitrageScanner = System.currentTimeMillis();
-
-            // Gets the two exchanges that offer the best arbitrage opportunity for this currency pair.
-            // Objects in array will be null if no exchanges support this pair.
-            Exchange[] exchanges = getBestArbitrageExchangesForPair(cp);
-            if (exchanges[0] == null) continue;
-
-            // Get timestamp, pair, difference, low ask, high bid
-            long endTimeArbitrageScanner = System.currentTimeMillis();
-            Timestamp timestamp = new Timestamp(endTimeArbitrageScanner);
-            long timeElapsedArbitrageScanner = endTimeArbitrageScanner - startTimeArbitrageScanner;
-            logger.info("Arbitrage opportunity for pair " + pairString + " identified at " + timestamp.toString() + ".");
-            logger.info("Arbitrage service for pair " + pairString + " took " + timeElapsedArbitrageScanner +
-                    " ms to complete.");
-
-            // Checks the exchange wallet's balance. If <= 0 or null, logs the exception and forces an early iteration
-            // of the loop.
-            try {
-                if (exchangeWalletMapper.getBalanceByExchangeIdAndCurrencyId(
-                        exchangeMapper.getExchangeIdByName(
-                                exchanges[0].getExchangeSpecification().getExchangeName()),
-                        currencyMapper.getIdBySymbol(pairString.substring(0, pairString.indexOf("/"))))
-                        .compareTo(BigDecimal.valueOf(0)) == 0)
-                    throw new InsufficientFundsException("", HttpStatus.OK);
-            } catch (NullPointerException | InsufficientFundsException e) {
-                logger.error("Insufficient balance in exchange wallet to make an arbitrage trade.");
-                continue;
-            }
-
-            // Creates and begins initializing the values of the TradeData object containing the data to make a trade
-            // and persist the data.
-            tradeService.buildTradeModel(exchanges, cp);
-
-            // Executes the mock trade.
-            String fromCurrency = pairString.substring(0, pairString.indexOf("/"));
-            tradeService.executeTrade();
-
-            logger.info("Finishing arbitrage service for pair " + pairString + ".");
-        }
-    }
+//    public void scanExchangesByPair() throws Exception {
+//
+//        ArrayList<CurrencyPair> pairsList = exchangeService.generateCurrencyPairList();
+//
+//        for (CurrencyPair cp : pairsList) {
+//
+//            String pairString = cp.toString();
+//            logger.info("Starting arbitrage service for pair " + pairString + ".");
+//            long startTimeArbitrageScanner = System.currentTimeMillis();
+//
+//            // Gets the two exchanges that offer the best arbitrage opportunity for this currency pair.
+//            // Objects in array will be null if no exchanges support this pair.
+//            Exchange[] exchanges = getBestArbitrageExchangesForPair(cp);
+//            if (exchanges[0] == null) continue;
+//
+//            // Get timestamp, pair, difference, low ask, high bid
+//            long endTimeArbitrageScanner = System.currentTimeMillis();
+//            Timestamp timestamp = new Timestamp(endTimeArbitrageScanner);
+//            long timeElapsedArbitrageScanner = endTimeArbitrageScanner - startTimeArbitrageScanner;
+//            logger.info("Arbitrage opportunity for pair " + pairString + " identified at " + timestamp.toString() + ".");
+//            logger.info("Arbitrage service for pair " + pairString + " took " + timeElapsedArbitrageScanner +
+//                    " ms to complete.");
+//
+//            // Checks the exchange wallet's balance. If <= 0 or null, logs the exception and forces an early iteration
+//            // of the loop.
+//            try {
+//                if (exchangeWalletMapper.getBalanceByExchangeIdAndCurrencyId(
+//                        exchangeMapper.getExchangeIdByName(
+//                                exchanges[0].getExchangeSpecification().getExchangeName()),
+//                        currencyMapper.getIdBySymbol(pairString.substring(0, pairString.indexOf("/"))))
+//                        .compareTo(BigDecimal.valueOf(0)) == 0)
+//                    throw new InsufficientFundsException("", HttpStatus.OK);
+//            } catch (NullPointerException | InsufficientFundsException e) {
+//                logger.error("Insufficient balance in exchange wallet to make an arbitrage trade.");
+//                continue;
+//            }
+//
+//            // Creates and begins initializing the values of the TradeData object containing the data to make a trade
+//            // and persist the data.
+//            tradeService.buildTradeModel(exchanges, cp);
+//
+//            // Executes the mock trade.
+//            String fromCurrency = pairString.substring(0, pairString.indexOf("/"));
+//            tradeService.executeTrade();
+//
+//            logger.info("Finishing arbitrage service for pair " + pairString + ".");
+//        }
+//    }
 
     /**
      * Scans a given list of exchanges and returns an array of two exchanges for the given currency pair.
      * [0] is the highest priced exchange, while [1] is the lowest.
      * @param currencyPair the crypto currency pair to be scanned
-     * @throws IOException
+     * @throws Exception
      */
-//    @Async
-    // TODO What if currency pair is trending downward?
-    public Exchange[] getBestArbitrageExchangesForPair(CurrencyPair currencyPair) throws IOException, TableEmptyException {
+    public ArbitrageModel getBestArbitrageOpportunitiesForPair(List<Exchange> exchanges, CurrencyPair currencyPair) throws IOException {
 
         // The exchanges to sell and buy from
         // [0] is the exchange to sell from, [1] is the one to buy from
         Exchange[] exchangeArray = new Exchange[2];
 
-        // TODO See if this can be executed and cached on startup, as this is a time waster here.
-        ArrayList<Exchange> exchangesList = exchangeService.generateDefaultExchangeList();
-
-        MarketDataService marketDataService;
-        Ticker currentTicker = null;
+        Ticker ticker = null;
         BigDecimal lowestAsk = null;
         BigDecimal highestBid = null;
         String cp = currencyPair.toString();
 
-        for (Exchange ex : exchangesList) {
+        for (Exchange e : exchanges) {
 
-            //If the exchange doesn't support the given pair, skip it.
-            if (!doesExchangeSupportCurrency(ex, currencyPair)) continue;
+            // If the exchange doesn't support the given pair, skip it.
+            if (!doesExchangeSupportCurrencyPair(e, currencyPair)) continue;
 
-            logger.info("Scanning " + ex.getExchangeSpecification().getExchangeName()
-                    + " for " + cp + " . . . ");
+            logger.info("Scanning "
+                    + e.getExchangeSpecification().getExchangeName()
+                    + " for "
+                    + cp
+                    + " . . . ");
 
-            //Get the given market last price for the given pair
-            marketDataService = ex.getMarketDataService();
-            currentTicker = marketDataService.getTicker(currencyPair);
-            logger.info("Bid|Ask: " + currentTicker.getBid() + " - " + currentTicker.getAsk());
+            // Get the given market last price for the given pair.
+            ticker = e.getMarketDataService().getTicker(currencyPair);
+            logger.info("Bid|Ask: "
+                    + ticker.getBid()
+                    + " - "
+                    + ticker.getAsk());
 
-            //If it's the first exchange to compare...
+            // If it's the first exchange to compare...
             if (exchangeArray[0] == null && exchangeArray[1] == null) {
 
-                exchangeArray[0] = ex;
-                exchangeArray[1] = ex;
-                highestBid  = currentTicker.getBid();
-                lowestAsk   = currentTicker.getAsk();
+                exchangeArray[0] = e;
+                exchangeArray[1] = e;
+                highestBid = ticker.getBid();
+                lowestAsk = ticker.getAsk();
 
             }
-            //Compare to the highest and lowest priced exchange and replace them if necessary
-            else if (currentTicker.getBid().compareTo(highestBid) == 1){
+            // Compare to the highest and lowest priced exchange and replace them if necessary.
+            else if (ticker.getBid().compareTo(highestBid) == 1) {
 
-                highestBid = currentTicker.getBid();
-                exchangeArray[0] = ex;
+                highestBid = ticker.getBid();
+                exchangeArray[0] = e;
 
-            } else if (currentTicker.getAsk().compareTo(lowestAsk) == -1){
+            } else if (ticker.getAsk().compareTo(lowestAsk) == -1) {
 
-                lowestAsk = currentTicker.getAsk();
-                exchangeArray[1] = ex;
+                lowestAsk = ticker.getAsk();
+                exchangeArray[1] = e;
             }
         }
 
-        // Throws an exception if each element of the exchange array is empty before continuing to execute.
+        // Returns null if each element of the exchange array is empty before continuing to execute.
         if (exchangeArray[0] == null && exchangeArray[1] == null) {
 
             String message = "No exchange supports the trading pair " + cp;
             logger.warn(message);
-            throw new TableEmptyException(message, HttpStatus.BAD_REQUEST);
+            return null;
+        }
+
+        // Returns null if no arbitrage opportunities are available between exchanges.
+        if (exchangeArray[0].getExchangeSpecification().getExchangeName().equals(
+                exchangeArray[1].getExchangeSpecification().getExchangeName())
+                || lowestAsk.compareTo(highestBid) == 1) {
+
+            String message = "No arbitrage opportunities currently available for the trading pair " + cp;
+            logger.warn(message);
+            return null;
         }
 
         // Creates arbitrage model object and persists arbitrage data into the database.
-        // POSSIBLE TIME WASTING BOTTLENECK HERE!
 
         // Gets the timestamp from the ticker. If the ticker contains no timestamp, uses the current time.
         Timestamp ts = new Timestamp(System.currentTimeMillis());
 
         try {
-            ts.setTime(currentTicker.getTimestamp().getTime());
+            ts.setTime(ticker.getTimestamp().getTime());
         } catch (NullPointerException e) {
             logger.error("Current ticker contains a null timestamp. Current system time used instead.");
         }
 
         ArbitrageModel arbitrageData = new ArbitrageModel();
         arbitrageData.setTimestamp(ts);
-        arbitrageData.setCurrencyPair(cp);
-        arbitrageData.setDifference(highestBid.subtract(lowestAsk));
+        arbitrageData.setCurrencyPairName(cp);
+        arbitrageData.setDifference(lowestAsk.subtract(highestBid));
         arbitrageData.setHighBid(highestBid);
         arbitrageData.setLowAsk(lowestAsk);
-        arbitrageData.setHighBidExchange(exchangeArray[0].getExchangeSpecification().getExchangeName());
-        arbitrageData.setLowAskExchange(exchangeArray[1].getExchangeSpecification().getExchangeName());
+        arbitrageData.setHighBidExchangeName(exchangeArray[0].getExchangeSpecification().getExchangeName());
+        arbitrageData.setLowAskExchangeName(exchangeArray[1].getExchangeSpecification().getExchangeName());
         arbitrageMapper.addArbitrageData(arbitrageData);
 
         logger.info("Highest priced bid -> " + exchangeArray[0].getExchangeSpecification().getExchangeName()
@@ -194,7 +203,22 @@ public class ArbitrageScanningService {
         logger.info("Lowest priced ask -> " + exchangeArray[1].getExchangeSpecification().getExchangeName()
                 + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getAsk());
 
-        return exchangeArray;
+        return arbitrageData;
+    }
+
+    public List<ArbitrageModel> getBestArbitrageOpportunitiesForAllCurrencies(List<Exchange> exchanges) throws Exception {
+
+        List<ArbitrageModel> arbitrageOpportunities = new ArrayList<>();
+        List<CurrencyPair> currencyPairs = exchangeService.generateCurrencyPairList();
+
+        for (CurrencyPair cp : currencyPairs) {
+
+            ArbitrageModel arbitrageModel = getBestArbitrageOpportunitiesForPair(exchanges, cp);
+            if (arbitrageModel == null) continue;
+            arbitrageOpportunities.add(arbitrageModel);
+        }
+
+        return arbitrageOpportunities;
     }
 
     /**
@@ -203,37 +227,30 @@ public class ArbitrageScanningService {
      * @param currencyPair - A currency pair object
      * @return true if the currency pair is supported, false if it is not
      */
+    public boolean doesExchangeSupportCurrencyPair(Exchange ex, CurrencyPair currencyPair) {
 
-    public boolean doesExchangeSupportCurrency(Exchange ex, CurrencyPair currencyPair){
-
-        if(ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair))
-            return true;
-        else
-            return false;
+        if (ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair)) return true;
+        else return false;
     }
 
-    /**
-     * Gets the names of the exchanges that offer the best arbitrage opportunity for the given currency pair.
-     * @param currencyPair -- the currency pair to query for best arbitrage opportunity
-     * @return the names of the exchanges in string form
-     * @throws IOException
-     * @throws TableEmptyException
-     */
-    public String[] getExchangeNames(CurrencyPair currencyPair) throws IOException, TableEmptyException {
+//    /**
+//     * Gets the names of the exchanges that offer the best arbitrage opportunity for the given currency pair.
+//     * @param currencyPair -- the currency pair to query for best arbitrage opportunity
+//     * @return the names of the exchanges in string form
+//     * @throws IOException
+//     * @throws TableEmptyException
+//     */
+//    public String[] getExchangeNames(CurrencyPair currencyPair) throws IOException, Exception {
+//
+//        ArbitrageModel arbitrageModel = getBestArbitrageExchangesForPair(currencyPair);
+//        String[] exchangeNames = new String[2];
+//        exchangeNames[0] = arbitrageModel.getHighBidExchangeName();
+//        exchangeNames[1] = arbitrageModel.getLowAskExchangeName();
+//
+//        return exchangeNames;
+//    }
 
-        Exchange[] exchanges = getBestArbitrageExchangesForPair(currencyPair);
-        String[] exchangeNames = new String[2];
-        exchangeNames[0] = exchanges[0].getExchangeSpecification().getExchangeName();
-        exchangeNames[1] = exchanges[1].getExchangeSpecification().getExchangeName();
 
-        // Are there no arbitrage opportunities between exchanges? In other words, does a single exchange contain both
-        // the highest and lowest bids?
-        if (exchangeNames[0].equals(exchangeNames[1])) {
-            // TODO Figure out how to handle this.
-        }
-
-        return exchangeNames;
-    }
 
 //    @Async
 //    public Ticker getTickerBinance(String currencyPair){

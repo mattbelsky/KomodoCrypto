@@ -2,27 +2,45 @@ package komodocrypto.model.database;
 
 public class CurrencyPairs {
 
-    int currencyPairId;
-    String symbol1;
-    String symbol2;
+    int id;
+    int currencyIdBase;
+    int currencyIdCounter;
+    String currencySymbolBase;
+    String currencySymbolCounter;
 
-    public int getCurrencyPairId() {
-        return currencyPairId;
+    public int id() {
+        return id;
     }
 
-    public String getSymbol1() {
-        return symbol1;
+    public int getCurrencyIdBase() {
+        return currencyIdBase;
     }
 
-    public void setSymbol1(String symbol1) {
-        this.symbol1 = symbol1;
+    public void setCurrencyIdBase(int currencyIdBase) {
+        this.currencyIdBase = currencyIdBase;
     }
 
-    public String getSymbol2() {
-        return symbol2;
+    public int getCurrencyIdCounter() {
+        return currencyIdCounter;
     }
 
-    public void setSymbol2(String symbol2) {
-        this.symbol2 = symbol2;
+    public void setCurrencyIdCounter(int currencyIdCounter) {
+        this.currencyIdCounter = currencyIdCounter;
+    }
+
+    public String getCurrencySymbolBase() {
+        return currencySymbolBase;
+    }
+
+    public void setCurrencySymbolBase(String currencySymbolBase) {
+        this.currencySymbolBase = currencySymbolBase;
+    }
+
+    public String getCurrencySymbolCounter() {
+        return currencySymbolCounter;
+    }
+
+    public void setCurrencySymbolCounter(String currencySymbolCounter) {
+        this.currencySymbolCounter = currencySymbolCounter;
     }
 }

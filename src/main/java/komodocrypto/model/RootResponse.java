@@ -20,6 +20,11 @@ public class RootResponse {
         this.data = data;
     }
 
+    public RootResponse(String message, Object data) {
+        this.message = message;
+        this.data = data;
+    }
+
     public HttpStatus getStatus() {
         return status;
     }
