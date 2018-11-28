@@ -58,7 +58,7 @@ public class ExchangesConfig {
     @Value("${bittrex.wallet.xrp.id}")
     private String bittrexXRPWalletId;
 
-    //------COINBASE------//
+    //------COINBASE PRO------//
 
     @Value("${coinbasepro.apiKey}")
     private String coinbaseproApiKey;
@@ -66,8 +66,8 @@ public class ExchangesConfig {
     @Value("${coinbasepro.secretKey}")
     private String coinbaseproSecretKey;
 
-    @Value("${coinbasepro.password}")
-    private String coinbaseproPassword;
+    @Value("${coinbasepro.passphrase}")
+    private String coinbaseproPassphrase;
 
     @Value("${coinbasepro.wallet.btc.id}")
     private String coinbaseproBTCWalletId;
@@ -189,8 +189,8 @@ public class ExchangesConfig {
         return coinbaseproSecretKey;
     }
 
-    public String getCoinbaseproPassword() {
-        return coinbaseproPassword;
+    public String getCoinbaseproPassphrase() {
+        return coinbaseproPassphrase;
     }
 
     public String getCoinbaseproBTCWalletId() {

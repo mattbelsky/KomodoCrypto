@@ -123,8 +123,7 @@ public class ExchangeService {
                 exSpec = new CoinbaseProExchange().getDefaultExchangeSpecification();
                 exSpec.setApiKey(exchangesConfig.getCoinbaseproApiKey());
                 exSpec.setSecretKey(exchangesConfig.getCoinbaseproSecretKey());
-                // TODO Find the right password.
-                exSpec.setExchangeSpecificParametersItem("passphrase", exchangesConfig.getCoinbaseproPassword());
+                exSpec.setExchangeSpecificParametersItem("passphrase", exchangesConfig.getCoinbaseproPassphrase());
                 break;
 
             default:
