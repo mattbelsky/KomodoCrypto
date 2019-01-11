@@ -54,18 +54,18 @@ public class ArbitrageController {
     }
 
     @GetMapping("/arbitrageopportunities")
-    public RootResponse getCurrentArbitrageOpportunities(@RequestParam(value = "base", required = false) String from,
-                                                         @RequestParam(value = "counter", required = false) String to)
+    public RootResponse getCurrentArbitrageOpportunities(@RequestParam(value = "base", required = false) String base,
+                                                         @RequestParam(value = "counter", required = false) String counter)
             throws Exception {
 
         List<Exchange> exchanges = exchangeService.generateExchangesList();
 
-        if (from == null || to == null)
+        if (base == null || counter == null)
             return new RootResponse(HttpStatus.OK, "Best arbitrage opportunities for all currency pairs.",
                     arbitrageScanningService.getBestArbitrageOpportunitiesForAllCurrencies(exchanges));
         else
-            return new RootResponse(HttpStatus.OK, "Best arbitrage opportunity for pair " + from + "/" + to + ".",
-                arbitrageScanningService.getBestArbitrageOpportunitiesForPair(exchanges, new CurrencyPair(from, to)));
+            return new RootResponse(HttpStatus.OK, "Best arbitrage opportunity for pair " + base + "/" + counter + ".",
+                arbitrageScanningService.getBestArbitrageOpportunitiesForPair(exchanges, new CurrencyPair(base, counter)));
     }
 
 
@@ -80,19 +80,19 @@ public class ArbitrageController {
         Exchange[] exchange = new Exchange[2];
         String packagePath = "org.knowm.xchange.";
 
-        String fullyQualifiedFromExchangeName = packagePath
+        String fullyQualifiedBaseExchangeName = packagePath
                 + fromExchangeName.toLowerCase()
                 + "."
                 + fromExchangeName
                 + "Exchange";
-        exchange[0] = ExchangeFactory.INSTANCE.createExchange(fullyQualifiedFromExchangeName);
+        exchange[0] = ExchangeFactory.INSTANCE.createExchange(fullyQualifiedBaseExchangeName);
 
-        String fullyQualifiedToExchangeName = packagePath
+        String fullyQualifiedCounterExchangeName = packagePath
                 + toExchangeName.toLowerCase()
                 + "."
                 + toExchangeName
                 + "Exchange";
-        exchange[1] = ExchangeFactory.INSTANCE.createExchange(fullyQualifiedToExchangeName);
+        exchange[1] = ExchangeFactory.INSTANCE.createExchange(fullyQualifiedCounterExchangeName);
 
         CurrencyPair cp = new CurrencyPair(base, counter);
         BigDecimal feeFromExchange = baseTradeService.calculateTradingFees(exchange[0], cp, new BigDecimal(amount));

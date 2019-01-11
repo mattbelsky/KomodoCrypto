@@ -1,17 +1,5 @@
 package komodocrypto.controllers;
 
-//import com.binance.api.client.domain.account.Account;
-//import com.binance.api.client.domain.account.DepositAddress;
-//import com.binance.api.client.domain.account.WithdrawResult;
-//import com.binance.api.client.domain.market.BookTicker;
-//import com.binance.api.client.domain.market.Candlestick;
-//import com.binance.api.client.domain.market.TickerPrice;
-//import komodocrypto.services.exchanges.binance.BinanceAccount;
-//import komodocrypto.services.exchanges.binance.BinanceTicker;
-//import komodocrypto.services.exchanges.binance.BinanceTradeImpl;
-//import komodocrypto.services.exchanges.bitstamp.BitstampAccount;
-//import komodocrypto.services.exchanges.bitstamp.BitstampTicker;
-//import komodocrypto.services.exchanges.bitstamp.BitstampTradeImpl;
 import komodocrypto.model.RootResponse;
 import komodocrypto.model.TradeModel;
 import komodocrypto.services.exchanges.ExchangeService;
@@ -45,19 +33,33 @@ public class ExchangeController {
     @Qualifier("BaseTradeService")
     BaseTradeService baseTradeService;
 
-    @GetMapping("/binance/account")
-    public String getBinanceAccountInfo() throws IOException {
-        return exchangeService.getAccountInfo(exchangeService.createExchange("Binance"));
-    }
+    @GetMapping("/{exchange}/account")
+    public String getAccountService(@PathVariable("exchange") String exchangeName) throws IOException {
 
-    @GetMapping("/bittrex/account")
-    public String getBittrexAccountInfo() throws IOException {
-        return exchangeService.getAccountInfo(exchangeService.createExchange("Bittrex"));
-    }
+        Exchange exchange;
+        switch (exchangeName) {
 
-    @GetMapping("/coinbasepro/account")
-    public String getCoinbaseAccountInfo() throws IOException {
-        return exchangeService.getAccountInfo(exchangeService.createExchange("CoinbasePro"));
+            case "binance":
+                exchange = exchangeService.createExchange("Binance");
+                break;
+
+            case "bittrex":
+                exchange = exchangeService.createExchange("Bittrex");
+                break;
+
+            case "coinbasepro":
+                exchange = exchangeService.createExchange("CoinbasePro");
+                break;
+
+            case "kraken":
+                exchange = exchangeService.createExchange("Kraken");
+                break;
+
+            default:
+                return "Exchange not supported.";
+        }
+
+        return exchange.getAccountService().getAccountInfo().toString();
     }
 
     @GetMapping("/ticker/{exchange}")
