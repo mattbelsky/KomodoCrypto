@@ -115,6 +115,10 @@ public class ExchangesConfig {
     @Value("${blockchainwallet.btc.id}")
     private String blockchainWalletBTCId;
 
+    //------CRYPTOCOMPARE API------//
+    @Value("${cryptocompare.apiKey}")
+    private String cryptocompareAPIKey;
+
     // Getters
 
     public String getBinanceApiKey() {
@@ -247,5 +251,9 @@ public class ExchangesConfig {
 
     public String getBlockchainWalletBTCId() {
         return blockchainWalletBTCId;
+    }
+
+    public String getCryptocompareAPIKey() {
+        return cryptocompareAPIKey;
     }
 }

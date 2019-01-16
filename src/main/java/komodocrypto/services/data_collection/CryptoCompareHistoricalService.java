@@ -4,6 +4,7 @@ package komodocrypto.services.data_collection;
 //import com.binance.api.client.domain.market.Candlestick;
 //import com.binance.api.client.domain.market.CandlestickInterval;
 import komodocrypto.TimePeriod;
+import komodocrypto.configuration.ExchangesConfig;
 import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
 import komodocrypto.mappers.CryptoMapper;
 import komodocrypto.model.RootResponse;
@@ -13,13 +14,12 @@ import komodocrypto.model.cryptocompare.news.News;
 import komodocrypto.model.cryptocompare.social_stats.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 @Service
 public class CryptoCompareHistoricalService {
@@ -30,14 +30,17 @@ public class CryptoCompareHistoricalService {
     @Autowired
     CryptoMapper cryptoMapper;
 
-    @Autowired
-    ScheduledDataCollectionTasks scheduledTasks;
+//    @Autowired
+//    ScheduledDataCollectionTasks scheduledTasks;
 
     @Autowired
     CacheableDataCollectionTasks cacheableDataCollectionTasks;
 
     @Autowired
     private TaskExecutor taskExecutor;
+
+    @Autowired
+    ExchangesConfig exchangesConfig;
 
 //    @Autowired
 //    BinanceUtil binanceUtil;
@@ -74,8 +77,8 @@ public class CryptoCompareHistoricalService {
                     // Cycles through each exchange.
                     for (String exchange : exchanges) {
 
-                        // Skips Coinbase for the XRP/BTC pair.
-                        if ((pair[0].equals("XRP") || pair[1].equals("XRP")) && exchange.equals("Coinbase")) continue;
+//                        // Skips Coinbase for the XRP/BTC pair.
+//                        if ((pair[0].equals("XRP") || pair[1].equals("XRP")) && exchange.equals("Coinbase")) continue;
 
                         /*  if (query count(id)) >= numRecords
                                 continue
@@ -135,46 +138,46 @@ public class CryptoCompareHistoricalService {
      * @param period the time period to query for
      * @return a response object containing the data in the database
      */
-    public RootResponse switchCronOps(String period) {
-
-        String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
-        String[] exchanges = cacheableDataCollectionTasks.getExchanges();
-
-        // Queries for historical data for each trading pair from each exchange.
-        // NOTE: Coinbase does not support XRP/BTC, so it is skipped for this pair.
-
-        // Cycles through each trading pair.
-        for (String[] pair : tradingPairs) {
-
-            // Cycles through each exchange.
-            for (String exchange : exchanges) {
-
-                // Skips Coinbase for the XRP/BTC pair.
-                if ((pair[0].equals("XRP") || pair[1].equals("XRP"))
-                        && exchange.equals("Coinbase")) continue;
-
-//                if (scheduledTasks.isCronHit() == true) {
-
-                    switch (period) {
-                        case "week":
-                            aggregateWeekly(pair[0], pair[1], exchange);
-                            continue;
-                        case "day":
-                            queryMissingHistoricalData(scheduledTasks.getTimestampDaily(), period, pair[0], pair[1], exchange);
-                            continue;
-                        case "hour":
-                            queryMissingHistoricalData(scheduledTasks.getTimestampHourly(), period, pair[0], pair[1], exchange);
-                            continue;
-                        case "minute":
-                            queryMissingHistoricalData(scheduledTasks.getTimestampMinutely(), period, pair[0], pair[1], exchange);
-                            continue;
-                    }
-//                }
-            }
-        }
-
-        return new RootResponse(HttpStatus.OK, "Data successfully added.", getResponseData());
-    }
+//    public RootResponse switchCronOps(String period) {
+//
+//        String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
+//        String[] exchanges = cacheableDataCollectionTasks.getExchanges();
+//
+//        // Queries for historical data for each trading pair from each exchange.
+//        // NOTE: Coinbase does not support XRP/BTC, so it is skipped for this pair.
+//
+//        // Cycles through each trading pair.
+//        for (String[] pair : tradingPairs) {
+//
+//            // Cycles through each exchange.
+//            for (String exchange : exchanges) {
+//
+//                // Skips Coinbase for the XRP/BTC pair.
+//                if ((pair[0].equals("XRP") || pair[1].equals("XRP"))
+//                        && exchange.equals("Coinbase")) continue;
+//
+////                if (scheduledTasks.isCronHit() == true) {
+//
+//                    switch (period) {
+//                        case "week":
+//                            aggregateWeekly(pair[0], pair[1], exchange);
+//                            continue;
+//                        case "day":
+//                            queryMissingHistoricalData(scheduledTasks.getTimestampDaily(), period, pair[0], pair[1], exchange);
+//                            continue;
+//                        case "hour":
+//                            queryMissingHistoricalData(scheduledTasks.getTimestampHourly(), period, pair[0], pair[1], exchange);
+//                            continue;
+//                        case "minute":
+//                            queryMissingHistoricalData(scheduledTasks.getTimestampMinutely(), period, pair[0], pair[1], exchange);
+//                            continue;
+//                    }
+////                }
+//            }
+//        }
+//
+//        return new RootResponse(HttpStatus.OK, "Data successfully added.", getResponseData());
+//    }
 
     /**
      * Queries for historical data.
@@ -190,7 +193,8 @@ public class CryptoCompareHistoricalService {
                 "fsym=" + fromCurrency +
                 "&tsym=" + toCurrency +
                 "&e=" + exchange +
-                "&aggregate=1&limit=" + numRecords;
+                "&aggregate=1&limit=" + numRecords +
+                "&api_key=" + exchangesConfig.getCryptocompareAPIKey();
 
         PriceHistorical historicalData = restTemplate.getForObject(query, PriceHistorical.class);
 
@@ -225,7 +229,8 @@ public class CryptoCompareHistoricalService {
                     "&tsym=" + toCurrency +
                     "&e=" + exchange +
                     "&toTs=" + timestamp +
-                    "&aggregate=1&limit=1";
+                    "&aggregate=1&limit=1" +
+                    "&api_key=" + exchangesConfig.getCryptocompareAPIKey();
             PriceHistorical historicalData = restTemplate.getForObject(query, PriceHistorical.class);
 
             // The Data object being acted upon. Want the second element in the Data array because the CryptoCompare
@@ -461,24 +466,25 @@ public class CryptoCompareHistoricalService {
         return average;
     }
 
+//    /**
+//     * Aggregates daily data into weekly data.
+//     * @param fromCurrency
+//     * @param toCurrency
+//     * @param exchange
+//     */
+//    public void aggregateWeekly(String fromCurrency, String toCurrency, String exchange) {
+//
+//        int weeklyTimestamp = scheduledTasks.getTimestampWeekly();
+//        int secInWeek = TimePeriod.SEC_IN_WEEK.getValue();
+//
+//        cryptoMapper.aggregateWeekly(weeklyTimestamp - secInWeek, weeklyTimestamp, fromCurrency, toCurrency, exchange);
+//    }
+
     /**
-     * Aggregates daily data into weekly data.
-     * @param fromCurrency
-     * @param toCurrency
-     * @param exchange
-     */
-    public void aggregateWeekly(String fromCurrency, String toCurrency, String exchange) {
-
-        int weeklyTimestamp = scheduledTasks.getTimestampWeekly();
-        int secInWeek = TimePeriod.SEC_IN_WEEK.getValue();
-
-        cryptoMapper.aggregateWeekly(weeklyTimestamp - secInWeek, weeklyTimestamp, fromCurrency, toCurrency, exchange);
-    }
-
-    /**
-     * Adds social data.
+     * Adds the latest social data.
      * @return a response object containing social media data
      */
+    // TODO Why is this returning null?
     public RootResponse addSocial() {
 
         String[][] tradingPairs = cacheableDataCollectionTasks.getTradingPairs();
@@ -486,7 +492,9 @@ public class CryptoCompareHistoricalService {
         int[] currencyIds = {7605, 202330, 3808, 5031};
 
         for (int i = 0; i < currencyIds.length; i++) {
-            String query = "https://www.cryptocompare.com/api/data/socialstats/?id=" + currencyIds[i];
+            String query = "https://min-api.cryptocompare.com/data/social/coin/latest/?" +
+                    "coinId=" + currencyIds[i] +
+                    "api_key=" + exchangesConfig.getCryptocompareAPIKey();
             SocialStats social = restTemplate.getForObject(query, SocialStats.class);
 
             Twitter twitterStats = social.getData().getTwitter();
@@ -563,7 +571,9 @@ public class CryptoCompareHistoricalService {
     public RootResponse addNews(String categories) {
 
         // Maps even if categories is empty or nonsense.
-        String query = "https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=" + categories;
+        String query = "https://min-api.cryptocompare.com/data/v2/news/?lang=EN" +
+                "&categories=" + categories +
+                "&api_key=" + exchangesConfig.getCryptocompareAPIKey();
         News news = restTemplate.getForObject(query, News.class);
         komodocrypto.model.cryptocompare.news.Data[] newsData = news.getData();
 

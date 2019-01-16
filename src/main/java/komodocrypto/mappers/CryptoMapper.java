@@ -118,10 +118,6 @@ public interface CryptoMapper {
             "(`time`, `currency`, `talkingAbout`, `likes`, `points`) " +
             "VALUES (#{time}, #{currency}, #{talkingAbout}, #{likes}, #{points});";
 
-    String SELECT_TWITTER_DATA = "SELECT * FROM komodo_crypto.twitter;";
-    String SELECT_REDDIT_DATA = "SELECT * FROM komodo_crypto.reddit;";
-    String SELECT_FACEBOOK_DATA = "SELECT * FROM komodo_crypto.facebook;";
-
     String INSERT_NEWS_DATA = "INSERT IGNORE INTO `komodo_crypto`.`news` " +
             "(`articleId`, `publishedOn`, `title`, `url`, `body`, `tags`, `categories`) " +
             "VALUES (#{articleId}, #{publishedOn}, #{title}, #{url}, #{body}, #{tags}, #{categories});";
@@ -165,13 +161,13 @@ public interface CryptoMapper {
 
 
     // Gets social media stats.
-    @Select(SELECT_TWITTER_DATA)
+    @Select("SELECT * FROM komodo_crypto.twitter;")
     public Twitter[] getTwitter();
 
-    @Select(SELECT_REDDIT_DATA)
+    @Select("SELECT * FROM komodo_crypto.reddit;")
     public Reddit[] getReddit();
 
-    @Select(SELECT_FACEBOOK_DATA)
+    @Select("SELECT * FROM komodo_crypto.facebook;")
     public Facebook[] getFacebook();
 
 

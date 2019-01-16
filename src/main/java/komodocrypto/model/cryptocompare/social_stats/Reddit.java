@@ -19,7 +19,7 @@ public class Reddit {
     @JsonProperty("active_users")
     int activeUsers;
     @JsonProperty("community_creation")
-    int communityCreation;
+    String communityCreation;
     int subscribers;
     @JsonProperty("Points")
     int points;
@@ -92,11 +92,11 @@ public class Reddit {
         this.activeUsers = activeUsers;
     }
 
-    public int getCommunityCreation() {
+    public String getCommunityCreation() {
         return communityCreation;
     }
 
-    public void setCommunityCreation(int communityCreation) {
+    public void setCommunityCreation(String communityCreation) {
         this.communityCreation = communityCreation;
     }
 

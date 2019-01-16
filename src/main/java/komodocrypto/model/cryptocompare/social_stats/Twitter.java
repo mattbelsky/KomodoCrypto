@@ -8,7 +8,8 @@ public class Twitter {
     int time;
     String currency;
     int following;
-    int accountCreation;
+    @JsonProperty("account_creation")
+    String accountCreation;
     String name;
     int lists;
     int statuses;
@@ -46,11 +47,11 @@ public class Twitter {
         this.following = following;
     }
 
-    public int getAccountCreation() {
+    public String getAccountCreation() {
         return accountCreation;
     }
 
-    public void setAccountCreation(int accountCreation) {
+    public void setAccountCreation(String accountCreation) {
         this.accountCreation = accountCreation;
     }
 
