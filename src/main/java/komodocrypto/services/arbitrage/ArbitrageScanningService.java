@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ArbitrageScanningService {
@@ -231,6 +232,23 @@ public class ArbitrageScanningService {
 
         if (ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair)) return true;
         else return false;
+    }
+
+    // Determines whether the each potential arbitrage exchange is profitable in that the amount gained by the difference
+    // is the same or greater than the desired profit margin.
+    // TODO See how fees factor into the filter calculation.
+    public List<ArbitrageModel> getProfitableArbitrages(List<ArbitrageModel> models, BigDecimal amount, BigDecimal margin) {
+
+        List<ArbitrageModel> profitable = new ArrayList<>();
+        if (models.size() == 0) return null;
+        profitable = models
+                .stream()
+                .filter(m -> amount
+                                .multiply(m.getDifference().abs())
+                                .compareTo(amount.multiply(margin))
+                    >= 0)
+                .collect(Collectors.toList());
+        return profitable;
     }
 
 //    /**
