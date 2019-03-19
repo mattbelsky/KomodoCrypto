@@ -1,22 +1,13 @@
 package komodocrypto.services.arbitrage;
 
-import komodocrypto.exceptions.custom_exceptions.TableEmptyException;
-import komodocrypto.mappers.ArbitrageMapper;
-import komodocrypto.mappers.database.CurrencyMapper;
-import komodocrypto.mappers.exchanges.ExchangeMapper;
-import komodocrypto.mappers.exchanges.ExchangeWalletMapper;
 import komodocrypto.model.arbitrage.ArbitrageModel;
 import komodocrypto.services.exchanges.ExchangeService;
-import komodocrypto.services.trades.BaseTradeService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Ticker;
-import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -33,22 +24,6 @@ public class ArbitrageScanningService {
 
     @Autowired
     ExchangeService exchangeService;
-
-    @Autowired
-    @Qualifier("BaseTradeService")
-    BaseTradeService tradeService;
-
-    @Autowired
-    ArbitrageMapper arbitrageMapper;
-
-    @Autowired
-    ExchangeWalletMapper exchangeWalletMapper;
-
-    @Autowired
-    ExchangeMapper exchangeMapper;
-
-    @Autowired
-    CurrencyMapper currencyMapper;
 
     // Cycles through each currency pair one second after the previous execution has finished and finds the two most
     // ideal exchanges for an arbitrage trade.
@@ -178,8 +153,6 @@ public class ArbitrageScanningService {
             return null;
         }
 
-        // Creates arbitrage model object and persists arbitrage data into the database.
-
         // Gets the timestamp from the ticker. If the ticker contains no timestamp, uses the current time.
         Timestamp ts = new Timestamp(System.currentTimeMillis());
 
@@ -189,22 +162,25 @@ public class ArbitrageScanningService {
             logger.error("Current ticker contains a null timestamp. Current system time used instead.");
         }
 
-        ArbitrageModel arbitrageData = new ArbitrageModel();
-        arbitrageData.setTimestamp(ts);
-        arbitrageData.setCurrencyPairName(cp);
-        arbitrageData.setDifference(lowestAsk.subtract(highestBid));
-        arbitrageData.setHighBid(highestBid);
-        arbitrageData.setLowAsk(lowestAsk);
-        arbitrageData.setHighBidExchangeName(exchangeArray[0].getExchangeSpecification().getExchangeName());
-        arbitrageData.setLowAskExchangeName(exchangeArray[1].getExchangeSpecification().getExchangeName());
-        arbitrageMapper.addArbitrageData(arbitrageData);
+        // Builds the arbitrage model.
+        ArbitrageModel arbitrageModel = new ArbitrageModel.Builder()
+                .timestamp(ts)
+                .highBid(highestBid)
+                .lowAsk(lowestAsk)
+                .difference()
+                .currencyPair(currencyPair)
+                .highBidExchange(exchangeArray[0])
+                .lowAskExchange(exchangeArray[1])
+                .build();
+
+//        arbitrageMapper.addArbitrageData(arbitrageData);
 
         logger.info("Highest priced bid -> " + exchangeArray[0].getExchangeSpecification().getExchangeName()
                 + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getBid());
         logger.info("Lowest priced ask -> " + exchangeArray[1].getExchangeSpecification().getExchangeName()
                 + ": " + exchangeArray[0].getMarketDataService().getTicker(currencyPair).getAsk());
 
-        return arbitrageData;
+        return arbitrageModel;
     }
 
     public List<ArbitrageModel> getBestArbitrageOpportunitiesForAllCurrencies(List<Exchange> exchanges) throws Exception {
@@ -215,11 +191,52 @@ public class ArbitrageScanningService {
         for (CurrencyPair cp : currencyPairs) {
 
             ArbitrageModel arbitrageModel = getBestArbitrageOpportunitiesForPair(exchanges, cp);
-            if (arbitrageModel == null) continue;
+            if (arbitrageModel == null)
+                continue;
             arbitrageOpportunities.add(arbitrageModel);
         }
 
         return arbitrageOpportunities;
+    }
+
+    // Gets a list of all the possible best arbitrage opportunities where the user has funds of the base currency in the
+    // current exchange's wallet.
+    public List<ArbitrageModel> getPossibleArbitrageOpportunities(List<Exchange> exchanges) throws IOException {
+
+        List<ArbitrageModel> arbitrageOpportunities = new ArrayList<>();
+        List<CurrencyPair> currencyPairs = exchangeService.generateCurrencyPairList();
+
+        for (CurrencyPair cp : currencyPairs) {
+
+            ArbitrageModel arbitrageModel = getBestArbitrageOpportunitiesForPair(exchanges, cp);
+            // If there are no arbitrage opportunities, continue.
+            if (arbitrageModel == null)
+                continue;
+
+            for (Exchange exchange : exchanges) {
+                if (exchange.getAccountService().getAccountInfo().getWallet().getBalance(cp.base).getAvailable()
+                        .equals(BigDecimal.ZERO))
+                    continue;
+            }
+            arbitrageOpportunities.add(arbitrageModel);
+        }
+        return arbitrageOpportunities;
+    }
+
+    // Gets from a list the arbitrage opportunity with the biggest difference between the high bid and low ask.
+    public ArbitrageModel getBestArbitrageOpportunity(List<ArbitrageModel> arbitrageModels) {
+
+        ArbitrageModel best = null;
+        BigDecimal maxDifference = new BigDecimal(Integer.MIN_VALUE);
+
+        for (ArbitrageModel am : arbitrageModels) {
+            BigDecimal difference = am.getDifference();
+            if (difference.compareTo(maxDifference) == 1) {
+                maxDifference = difference;
+                best = am;
+            }
+        }
+        return best;
     }
 
     /**
@@ -230,8 +247,10 @@ public class ArbitrageScanningService {
      */
     public boolean doesExchangeSupportCurrencyPair(Exchange ex, CurrencyPair currencyPair) {
 
-        if (ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair)) return true;
-        else return false;
+        if (ex.getExchangeMetaData().getCurrencyPairs().containsKey(currencyPair))
+            return true;
+        else
+            return false;
     }
 
     // Determines whether the each potential arbitrage exchange is profitable in that the amount gained by the difference
@@ -239,13 +258,13 @@ public class ArbitrageScanningService {
     // TODO See how fees factor into the filter calculation.
     public List<ArbitrageModel> getProfitableArbitrages(List<ArbitrageModel> models, BigDecimal amount, BigDecimal margin) {
 
-        List<ArbitrageModel> profitable = new ArrayList<>();
-        if (models.size() == 0) return null;
-        profitable = models
+        if (models.size() == 0)
+            return null;
+        List<ArbitrageModel> profitable = models
                 .stream()
                 .filter(m -> amount
-                                .multiply(m.getDifference().abs())
-                                .compareTo(amount.multiply(margin))
+                        .multiply(m.getDifference().abs())
+                        .compareTo(amount.multiply(margin))
                     >= 0)
                 .collect(Collectors.toList());
         return profitable;

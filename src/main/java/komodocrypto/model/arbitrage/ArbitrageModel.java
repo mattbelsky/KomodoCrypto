@@ -1,16 +1,16 @@
 package komodocrypto.model.arbitrage;
 
-import komodocrypto.model.TradeModel;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
-public class ArbitrageModel extends TradeModel {
+public class ArbitrageModel {
 
     private int id;
     private Timestamp timestamp;
+    private BigDecimal amount;
     private CurrencyPair currencyPair;
     private String currencyPairName;
     private BigDecimal difference;
@@ -20,42 +20,49 @@ public class ArbitrageModel extends TradeModel {
     private BigDecimal lowAsk;
     private Exchange lowAskExchange;
     private String lowAskExchangeName;
-    private String highBidExchangeWalletId;
-    private String lowAskExchangeWalletId;
+    private String lowAskExchangeWalletAddr;
 
-    public ArbitrageModel(Timestamp timestamp, String currencyPairName, BigDecimal difference, BigDecimal lowAsk, String lowAskExchangeName, BigDecimal highBid, String highBidExchangeName) {
-        this.timestamp = timestamp;
-        this.currencyPairName = currencyPairName;
-        this.difference = difference;
-        this.lowAsk = lowAsk;
-        this.lowAskExchangeName = lowAskExchangeName;
-        this.highBid = highBid;
-        this.highBidExchangeName = highBidExchangeName;
+    public ArbitrageModel(Builder builder) {
+        this.timestamp = builder.timestamp;
+        this.amount = builder.amount;
+        this.highBid = builder.highBid;
+        this.lowAsk = builder.lowAsk;
+        this.difference = builder.difference;
+        this.currencyPair = builder.currencyPair;
+        this.currencyPairName = builder.currencyPairName;
+        this.highBidExchange = builder.highBidExchange;
+        this.highBidExchangeName = builder.highBidExchangeName;
+        this.lowAskExchange = builder.lowAskExchange;
+        this.lowAskExchangeName = builder.lowAskExchangeName;
+        this.lowAskExchangeWalletAddr = builder.lowAskExchangeWalletAddr;
     }
 
-    public ArbitrageModel() {
-    }
+    public ArbitrageModel() {}
 
     public int getId() {
         return id;
     }
 
-    @Override
     public Timestamp getTimestamp() {
         return timestamp;
     }
 
-    @Override
     public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
 
-    @Override
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
     public CurrencyPair getCurrencyPair() {
         return currencyPair;
     }
 
-    @Override
     public void setCurrencyPair(CurrencyPair currencyPair) {
         this.currencyPair = currencyPair;
     }
@@ -124,19 +131,82 @@ public class ArbitrageModel extends TradeModel {
         this.lowAskExchangeName = lowAskExchangeName;
     }
 
-    public String getHighBidExchangeWalletId() {
-        return highBidExchangeWalletId;
+    public String getLowAskExchangeWalletAddr() {
+        return lowAskExchangeWalletAddr;
     }
 
-    public void setHighBidExchangeWalletId(String highBidExchangeWalletId) {
-        this.highBidExchangeWalletId = highBidExchangeWalletId;
+    public void setLowAskExchangeWalletAddr(String lowAskExchangeWalletAddr) {
+        this.lowAskExchangeWalletAddr = lowAskExchangeWalletAddr;
     }
 
-    public String getLowAskExchangeWalletId() {
-        return lowAskExchangeWalletId;
-    }
+    public static class Builder {
 
-    public void setLowAskExchangeWalletId(String lowAskExchangeWalletId) {
-        this.lowAskExchangeWalletId = lowAskExchangeWalletId;
+        private Timestamp timestamp;
+        private BigDecimal amount;
+        private CurrencyPair currencyPair;
+        private String currencyPairName;
+        private BigDecimal difference;
+        private BigDecimal highBid;
+        private Exchange highBidExchange;
+        private String highBidExchangeName;
+        private BigDecimal lowAsk;
+        private Exchange lowAskExchange;
+        private String lowAskExchangeName;
+        private String lowAskExchangeWalletAddr;
+
+        public Builder timestamp(Timestamp timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder amount(BigDecimal amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public Builder highBid(BigDecimal highBid) {
+            this.highBid = highBid;
+            return this;
+        }
+
+        public Builder lowAsk(BigDecimal lowAsk) {
+            this.lowAsk = lowAsk;
+            return this;
+        }
+
+        public Builder difference() {
+            if (lowAsk != null && highBid != null)
+                this.difference = lowAsk.subtract(highBid);
+            else
+                this.difference = BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder currencyPair(CurrencyPair currencyPair) {
+            this.currencyPair = currencyPair;
+            this.currencyPairName = currencyPair.toString();
+            return this;
+        }
+
+        public Builder highBidExchange(Exchange highBidExchange) {
+            this.highBidExchange = highBidExchange;
+            this.highBidExchangeName = highBidExchange.getExchangeSpecification().getExchangeName();
+            return this;
+        }
+
+        public Builder lowAskExchange(Exchange lowAskExchange) {
+            this.lowAskExchange = lowAskExchange;
+            this.lowAskExchangeName = lowAskExchange.getExchangeSpecification().getExchangeName();
+            return this;
+        }
+
+        public Builder lowAskExchangeWalletAddress(String lowAskExchangeWalletAddr) {
+            this.lowAskExchangeWalletAddr = lowAskExchangeWalletAddr;
+            return this;
+        }
+
+        public ArbitrageModel build() {
+            return new ArbitrageModel(this);
+        }
     }
 }

@@ -1,8 +1,8 @@
 package komodocrypto.services.exchanges;
 
-import komodocrypto.configuration.ExchangesConfig;
-import komodocrypto.mappers.database.CurrencyPairsMapper;
-import komodocrypto.mappers.exchanges.ExchangeMapper;
+import komodocrypto.utils.ExchangesUtil;
+import komodocrypto.mappers.CurrencyPairsMapper;
+import komodocrypto.mappers.ExchangeMapper;
 import komodocrypto.model.database.CurrencyPairs;
 import komodocrypto.model.exchanges.ExchangeModel;
 import org.knowm.xchange.Exchange;
@@ -11,29 +11,18 @@ import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.bittrex.BittrexExchange;
 import org.knowm.xchange.coinbasepro.CoinbaseProExchange;
-import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.account.AccountInfo;
-import org.knowm.xchange.dto.marketdata.Ticker;
-import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
 import org.knowm.xchange.kraken.KrakenExchange;
-import org.knowm.xchange.service.account.AccountService;
-import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +31,7 @@ public class ExchangeService {
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    ExchangesConfig exchangesConfig;
+    ExchangesUtil exchangesUtil;
 
     @Autowired
     ExchangeMapper exchangeMapper;
@@ -94,36 +83,53 @@ public class ExchangeService {
         return pairsList;
     }
 
+    public String formatExchangeName(String name) {
+
+        switch (name.toLowerCase()) {
+            case "binance":
+                return "Binance";
+            case "bittrex":
+                return "Bittrex";
+            case "kraken":
+                return "Kraken";
+            case "coinbasepro":
+                return "CoinbasePro";
+            default:
+                return null;
+        }
+    }
+
     public Exchange createExchange(String exchangeName) {
 
         ExchangeSpecification exSpec;
+        String formattedName = formatExchangeName(exchangeName);
 
-        switch (exchangeName.toLowerCase()) {
+        switch (formattedName) {
 
-            case "binance":
+            case "Binance":
                 exSpec = new BinanceExchange().getDefaultExchangeSpecification();
-                exSpec.setApiKey(exchangesConfig.getBinanceApiKey());
-                exSpec.setSecretKey(exchangesConfig.getBinanceSecretKey());
+                exSpec.setApiKey(exchangesUtil.getBinanceApiKey());
+                exSpec.setSecretKey(exchangesUtil.getBinanceSecretKey());
                 break;
 
-            case "bittrex":
+            case "Bittrex":
                 exSpec = new BittrexExchange().getDefaultExchangeSpecification();
-                exSpec.setUserName(exchangesConfig.getBittrexUsername());
-                exSpec.setApiKey(exchangesConfig.getBittrexApiKey());
-                exSpec.setSecretKey(exchangesConfig.getBittrexSecretKey());
+                exSpec.setUserName(exchangesUtil.getBittrexUsername());
+                exSpec.setApiKey(exchangesUtil.getBittrexApiKey());
+                exSpec.setSecretKey(exchangesUtil.getBittrexSecretKey());
                 break;
 
-            case "kraken":
+            case "Kraken":
                 exSpec = new KrakenExchange().getDefaultExchangeSpecification();
-                exSpec.setApiKey(exchangesConfig.getKrakenApiKey());
-                exSpec.setSecretKey(exchangesConfig.getKrakenPrivateKey());
+                exSpec.setApiKey(exchangesUtil.getKrakenApiKey());
+                exSpec.setSecretKey(exchangesUtil.getKrakenPrivateKey());
                 break;
 
-            case "coinbasepro":
+            case "CoinbasePro":
                 exSpec = new CoinbaseProExchange().getDefaultExchangeSpecification();
-                exSpec.setApiKey(exchangesConfig.getCoinbaseproApiKey());
-                exSpec.setSecretKey(exchangesConfig.getCoinbaseproSecretKey());
-                exSpec.setExchangeSpecificParametersItem("passphrase", exchangesConfig.getCoinbaseproPassphrase());
+                exSpec.setApiKey(exchangesUtil.getCoinbaseProApiKey());
+                exSpec.setSecretKey(exchangesUtil.getCoinbaseProSecretKey());
+                exSpec.setExchangeSpecificParametersItem("passphrase", exchangesUtil.getCoinbaseProPassphrase());
                 break;
 
             default:
@@ -136,57 +142,33 @@ public class ExchangeService {
         return exchange;
     }
 
-    public void transferFunds(String fromExchange, String toExchange, String currencyName, double amountDouble)
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
+    // Gets the wallet address for the specified currency and exchange by building the name of and invoking the necessary
+    // method in the configuration class using reflection.
+    public String getWalletAddress(String exchange, String currency) {
 
-        // String withdrawFunds(Currency currency, BigDecimal amount, String address)
-        String getWalletIdMethodName = buildGetExchangeCurrencyWalletIdMethodName(toExchange, currencyName);
-        Method getWalletId = exchangesConfig.getClass().getMethod(getWalletIdMethodName, null);
-        String walletId = getWalletId.invoke(exchangesConfig, null).toString();
-
-        Currency currency = new Currency(currencyName);
-        BigDecimal amount = new BigDecimal(amountDouble);
-        Exchange exchange = createExchange(fromExchange);
-
-        exchange.getAccountService().withdrawFunds(currency, amount, walletId);
+        exchange = formatExchangeName(exchange);
+        try {
+            String getWalletAddrMethodName = buildGetWalletAddrMethodName(exchange, currency);
+            Method getWalletAddr = exchangesUtil.getClass().getMethod(getWalletAddrMethodName, null);
+            String address = getWalletAddr.invoke(exchangesUtil, null).toString();
+            return address;
+        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+            // TODO Figure out how to handle exceptions thrown by this method.
+            return null;
+        }
     }
 
-    public String buildGetExchangeCurrencyWalletIdMethodName(String exchange, String currency) {
+    public String buildGetWalletAddrMethodName(String exchange, String currency) {
 
-        String getWalletIdMethodName = "get"
+        String getWalletAddrMethodName = "get"
                 + exchange
                 + currency.toUpperCase()
                 + "WalletId";
-        return getWalletIdMethodName;
-    }
-
-    // TODO This can go soon.
-    public String getAccountInfo(Exchange exchange) throws IOException {
-
-        AccountService accountService = exchange.getAccountService();
-        AccountInfo accountInfo = accountService.getAccountInfo();
-        return accountInfo.toString();
-    }
-
-    // TODO This method may not be necessary.
-    public HashMap<String, List<String>> getSupportedCurrencyPairs(Exchange exchange) {
-
-        HashMap<String, List<String>> currencyPairs = new HashMap<>();
-        String name = exchange.getExchangeSpecification().getExchangeName();
-        List<String> pairs = getCurrencyPairsByExchange(exchange);
-        currencyPairs.put(name, pairs);
-        return currencyPairs;
+        return getWalletAddrMethodName;
     }
 
     public List<String> getCurrencyPairsByExchange(Exchange exchange) {
-
-        Map<CurrencyPair, CurrencyPairMetaData> cpMeta = exchange.getExchangeMetaData().getCurrencyPairs();
-        List<String> currencyPair = cpMeta
-                .keySet()
-                .stream()
-                .map(cp -> cp.toString())
-                .collect(Collectors.toList());
-        return currencyPair;
+        return exchange.getExchangeMetaData().getCurrencyPairs().keySet().stream().map(cp -> cp.toString()).collect(Collectors.toList());
     }
 
 }

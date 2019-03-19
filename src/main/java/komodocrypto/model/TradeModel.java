@@ -14,8 +14,20 @@ public class TradeModel {
     private CurrencyPair currencyPair;
     private Exchange exchange;
     private BigDecimal amount;
-    private String walletId;
+    private String walletAddr;
     private Order.OrderType orderType;
+
+    private TradeModel(Builder builder) {
+        this.timestamp = builder.timestamp;
+        this.currencyPair = builder.currencyPair;
+        this.exchange = builder.exchange;
+        this.amount = builder.amount;
+        this.walletAddr = builder.walletAddr;
+        this.orderType = builder.orderType;
+    }
+
+    public TradeModel() {
+    }
 
     public int getId() {
         return id;
@@ -53,12 +65,12 @@ public class TradeModel {
         this.amount = amount;
     }
 
-    public String getWalletId() {
-        return walletId;
+    public String getWalletAddr() {
+        return walletAddr;
     }
 
-    public void setWalletId(String walletId) {
-        this.walletId = walletId;
+    public void setWalletAddr(String walletAddr) {
+        this.walletAddr = walletAddr;
     }
 
     public Order.OrderType getOrderType() {
@@ -67,5 +79,49 @@ public class TradeModel {
 
     public void setOrderType(Order.OrderType orderType) {
         this.orderType = orderType;
+    }
+
+    public static class Builder {
+
+        private Timestamp timestamp;
+        private CurrencyPair currencyPair;
+        private Exchange exchange;
+        private BigDecimal amount;
+        private String walletAddr;
+        private Order.OrderType orderType;
+
+        public Builder timestamp(Timestamp timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder currencyPair(CurrencyPair currencyPair) {
+            this.currencyPair = currencyPair;
+            return this;
+        }
+
+        public Builder exchange(Exchange exchange) {
+            this.exchange = exchange;
+            return this;
+        }
+
+        public Builder amount(BigDecimal amount) {
+            this.amount = amount;
+            return this;
+        }
+
+        public Builder walletAddress(String walletAddr) {
+            this.walletAddr = walletAddr;
+            return this;
+        }
+
+        public Builder orderType(Order.OrderType orderType) {
+            this.orderType = orderType;
+            return this;
+        }
+
+        public TradeModel build() {
+            return new TradeModel(this);
+        }
     }
 }

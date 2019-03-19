@@ -1,18 +1,9 @@
 package komodocrypto.services.trades;
 
-import komodocrypto.configuration.ExchangesConfig;
-import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
-import komodocrypto.mappers.database.CurrencyMapper;
-import komodocrypto.mappers.database.CurrencyPairsMapper;
-import komodocrypto.mappers.database.TransactionMapper;
-import komodocrypto.mappers.exchanges.ExchangeMapper;
-import komodocrypto.mappers.exchanges.ExchangeWalletMapper;
-import komodocrypto.model.TradeData;
+import komodocrypto.mappers.ExchangeMapper;
 import komodocrypto.model.TradeModel;
-import komodocrypto.model.database.Transaction;
 import komodocrypto.model.exchanges.ExchangeInOutLimits;
 import komodocrypto.model.exchanges.ExchangeModel;
-import komodocrypto.model.exchanges.ExchangeWallet;
 import komodocrypto.services.exchanges.ExchangeService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.Currency;
@@ -22,12 +13,9 @@ import org.knowm.xchange.dto.trade.MarketOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,64 +44,10 @@ public class BaseTradeService {
     ExchangeMapper exchangeMapper;
 
     @Autowired
-    ExchangesConfig exchangesConfig;
-
-    @Autowired
     ExchangeService exchangeService;
-
-    /*
-        Calculate fees
-        add to price
-        query wallet via Xchange to ensure funds exist
-        create transaction object
-        make trade
-        query to ensure trade is successful
-        query wallet to see actual balance
-        persist transaction object
-        call asset tracking service to update balances etc.
-        • Methods
-        ◦ BigDecimal calculateFees(Exchange exchange, BigDecimal amount)
-        ◦ boolean hasSufficientFunds(String walletId)
-        ◦ MarketOrder buildMarketOrder(Exchange exchange, CurrencyPair cp, BigDecimal amount)
-        ◦ void makeMarketTrade(MarketOrder) – trades at current market rates
-            ▪ if tradeSuccessful() == true
-                • query API for account info, get info,
-        ◦ boolean tradeSuccessful()
-        ◦ BigDecimal getUserWalletBalance()
-        ◦ String getExchangeWalletId(Exchange exchange)
-     */
-    public BigDecimal calculateTradingFees(Exchange exchange, CurrencyPair cp, BigDecimal amount) {
-
-        String exchangeName = exchange.getExchangeSpecification().getExchangeName();
-        String currencyCode = cp.base.getCurrencyCode();
-
-        ExchangeModel exchangeModel = exchangeMapper.getExchangeModelByName(exchangeName);
-        List<ExchangeInOutLimits> exchangeLimits = new ArrayList<ExchangeInOutLimits>();
-        exchangeLimits.add(exchangeMapper.getLimitsbyExchangeAndCurrency(exchangeName, currencyCode));
-        exchangeModel.setExchangeLimits(exchangeLimits);
-
-        BigDecimal fee = exchangeModel.getTakerTradeFee().multiply(amount);
-        return fee;
-    }
-
-    public boolean hasSufficientFunds(BigDecimal amount, BigDecimal balance, BigDecimal fees) {
-
-        BigDecimal totalTradeCost = amount.add(fees).add(SAFETY_BUFFER);
-        return balance.compareTo(totalTradeCost) == 1;
-    }
 
     public MarketOrder buildMarketOrder(TradeModel tradeModel)
             throws IOException {
-
-        /*  Get base currency
-            Get exchange
-            Get exchange's base currency wallet id
-            Get wallet balance
-            Get trading fee
-            If trading fee > wallet balance
-                throw exception
-            Create market order(BID, amount, currency pair)
-        */
 
         Exchange exchange = tradeModel.getExchange();
         Currency base = tradeModel.getCurrencyPair().base;
@@ -121,58 +55,65 @@ public class BaseTradeService {
         BigDecimal amount = tradeModel.getAmount();
         BigDecimal tradingFee = calculateTradingFees(exchange, currencyPair, amount);
         Order.OrderType orderType = tradeModel.getOrderType();
-        String walletId = tradeModel.getWalletId();
-        BigDecimal balance = getClientWalletBalance(exchange, base, walletId);
+        BigDecimal balance = exchange.getAccountService().getAccountInfo().getWallet().getBalance(base).getAvailable();
 
-        if (!hasSufficientFunds(amount, balance, tradingFee)) return null;
+        if (!hasSufficientFunds(amount, balance, tradingFee)) {
+            logger.warn("Insufficient funds for " + base.getCurrencyCode() + " in " +
+                    exchange.getExchangeSpecification().getExchangeName() + " wallet.");
+            return null;
+        }
 
+        logger.info("Market order built to trade " + currencyPair.toString() + " on " +
+                exchange.getExchangeSpecification().getExchangeName() + ".");
         return new MarketOrder(orderType, amount, currencyPair);
     }
 
-    public void makeMarketTrade(TradeModel tradeModel, MarketOrder order) throws IOException {
+    public String makeMarketTrade(TradeModel tradeModel, MarketOrder order) throws IOException {
 
         Exchange exchange = tradeModel.getExchange();
-        exchange.getTradeService().placeMarketOrder(order);
+        String transactionId = exchange.getTradeService().placeMarketOrder(order);
+        logger.info("Market order completed.");
+        return transactionId;
     }
 
-    public boolean wasTradeSuccessful() {
-        return false;
-    }
-
-    public BigDecimal getClientWalletBalance(Exchange exchange, Currency currency, String walletId) throws IOException {
-
-        return exchange.getAccountService()
-                .getAccountInfo()
-                .getWallet(walletId)
-                .getBalance(currency)
-                .getAvailable();
-    }
-
-    public TradeModel buildTradeModel(String exchangeName, String base, String counter, double amountDouble, String orderType)
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-
-        // The object to return
-        TradeModel tradeModel = new TradeModel();
+    public TradeModel buildTradeModel(String exchangeName, String base, String counter, double amountDouble, Order.OrderType orderType) {
 
         Exchange exchange = exchangeService.createExchange(exchangeName);
         CurrencyPair currencyPair = new CurrencyPair(base, counter);
         BigDecimal amount = new BigDecimal(amountDouble);
-
-        String getWalletIdMethodName = exchangeService.buildGetExchangeCurrencyWalletIdMethodName(exchangeName, base);
-        Method getWalletId = exchangesConfig.getClass().getMethod(getWalletIdMethodName, null);
-        String walletId = getWalletId.invoke(exchangesConfig, null).toString();
-
-        if (orderType.toLowerCase().equals("sell")) tradeModel.setOrderType(Order.OrderType.BID);
-        else if (orderType.toLowerCase().equals("buy")) tradeModel.setOrderType(Order.OrderType.ASK);
-        else return null;
+        String walletAddr = exchangeService.getWalletAddress(exchangeName, base);
 
         // Builds the trade model.
-        tradeModel.setCurrencyPair(currencyPair);
-        tradeModel.setExchange(exchange);
-        tradeModel.setAmount(amount);
-        tradeModel.setWalletId(walletId);
+        TradeModel tradeModel = new TradeModel.Builder()
+                .currencyPair(currencyPair)
+                .exchange(exchange)
+                .amount(amount)
+                .walletAddress(walletAddr)
+                .orderType(orderType)
+                .build();
 
         return tradeModel;
+    }
+
+    // Returns true if the wallet's balance is greater than the fees charged for the transaction.
+    public boolean hasSufficientFunds(BigDecimal amount, BigDecimal balance, BigDecimal fees) {
+
+        BigDecimal totalTradeCost = amount.add(fees).add(SAFETY_BUFFER);
+        return balance.compareTo(totalTradeCost) == 1;
+    }
+
+    public BigDecimal calculateTradingFees(Exchange exchange, CurrencyPair cp, BigDecimal amount) {
+
+        String exchangeName = exchange.getExchangeSpecification().getExchangeName();
+        String currencyCode = cp.base.getCurrencyCode();
+
+        ExchangeModel exchangeModel = exchangeMapper.getExchangeModelByName(exchangeName);
+        List<ExchangeInOutLimits> exchangeLimits = new ArrayList<>();
+        exchangeLimits.add(exchangeMapper.getLimitsbyExchangeAndCurrency(exchangeName, currencyCode));
+        exchangeModel.setExchangeLimits(exchangeLimits);
+
+        BigDecimal fee = exchangeModel.getTakerTradeFee().multiply(amount);
+        return fee;
     }
 
 //    // Builds a TradeData object, containing the information needed to execute a trade and persist its data.
