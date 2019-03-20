@@ -1,4 +1,4 @@
-package komodocrypto.security;
+package komodocrypto.configuration;
 
 import komodocrypto.security.MySavedRequestAwareAuthenticationSuccessHandler;
 import komodocrypto.security.RestAuthenticationEntryPoint;
