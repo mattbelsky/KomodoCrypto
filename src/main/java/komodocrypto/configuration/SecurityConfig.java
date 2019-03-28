@@ -1,34 +1,42 @@
 package komodocrypto.configuration;
 
-import komodocrypto.security.MySavedRequestAwareAuthenticationSuccessHandler;
+import komodocrypto.security.JWTAuthenticationFilter;
+import komodocrypto.security.JWTAuthorizationFilter;
 import komodocrypto.security.RestAuthenticationEntryPoint;
+import komodocrypto.services.users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+
+import static komodocrypto.security.SecurityConstants.SIGN_UP_URL;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-    @Autowired
-    MySavedRequestAwareAuthenticationSuccessHandler successHandler;
-    @Autowired AccessDeniedHandler accessDeniedHandler;
-    SimpleUrlAuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
+    UserService userService;
 
-    @Autowired // Autowiring configures the global parent Authentication Manager
+    @Autowired
+    RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
+    @Autowired
+    AccessDeniedHandler accessDeniedHandler;
+
+    @Autowired
+    BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Override // Autowiring configures the global parent Authentication Manager
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("admin").password(encoder().encode("password")).roles("ADMIN");
+
+        auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
     }
 
     @Override
@@ -40,20 +48,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(restAuthenticationEntryPoint)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/**").authenticated()
-                .antMatchers("/admin").permitAll()
-                .and()
-                .formLogin()
-                .successHandler(successHandler)
-                .failureHandler(failureHandler)
-                .and()
-                .httpBasic()
-                .and()
-                .logout();
-    }
 
-    @Bean
-    public PasswordEncoder encoder() {
-        return new BCryptPasswordEncoder();
+                // Allows anyone to access the sign-up URL.
+                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll()
+
+                // Only allows authenticated users to access the API.
+                .antMatchers("/api/**").authenticated()
+                .and()
+
+                // Custom JSON based authentication by POST of {"username":"<name>","password":"<password>"} which sets
+                // the token header upon authentication.
+                .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+
+                // Custom token based authentication based on the header previously given to the client
+                .addFilterAfter(new JWTAuthorizationFilter(), JWTAuthenticationFilter.class)
+
+                // Ensures that no HttpSession is created.
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

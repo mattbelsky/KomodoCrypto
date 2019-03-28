@@ -2,11 +2,13 @@ package komodocrypto.controllers;
 
 import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
 import komodocrypto.model.arbitrage.ArbitrageModel;
+import komodocrypto.model.user.User;
 import komodocrypto.services.arbitrage.ArbitrageScanningService;
 import komodocrypto.model.*;
 import komodocrypto.services.arbitrage.ArbitrageTradeService;
 import komodocrypto.services.exchanges.ExchangeService;
 import komodocrypto.services.trades.BaseTradeService;
+import komodocrypto.services.users.UserService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.dto.Order;
@@ -22,14 +24,20 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static komodocrypto.security.SecurityConstants.SIGN_UP_URL;
 
 @RestController
 public class RootController {
 
     @Autowired
     private ExchangeService exchangeService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private ArbitrageScanningService arbitrageScanningService;
@@ -48,6 +56,45 @@ public class RootController {
     @GetMapping("/admin")
     public void admin() {
         System.out.println("Hello admin!");
+    }
+
+    /********** CREATE/REMOVE USER & MODIFY USER SETTINGS **********/
+
+    @PostMapping(SIGN_UP_URL)
+    public RootResponse createUser(@RequestBody User user) {
+
+        boolean userIsUnique = userService.usernameIsUnique(user);
+        StringBuilder messageBuilder = new StringBuilder();
+        String usernameNotUniqueMsg = "Username must be unique.";
+
+        if (userService.usernameNotNull(user) == false)
+            messageBuilder.append("Username is null. ");
+        if (userService.passwordNotNull(user) == false)
+            messageBuilder.append("Password is empty. ");
+        if (userService.emailNotNull(user) == false)
+            messageBuilder.append("Email is empty. ");
+        else if (userService.validateEmail(user) == false)
+            messageBuilder.append("Invalid email.");
+        if (userIsUnique == false)
+            messageBuilder.append(usernameNotUniqueMsg);
+        if (messageBuilder.length() > 0) {
+            String message = messageBuilder.toString();
+            return new RootResponse(message, null);
+        }
+
+        try {
+            userService.addUser(user);
+        } catch (SQLIntegrityConstraintViolationException e) {
+            return new RootResponse(usernameNotUniqueMsg, null);
+        }
+
+        User addedUser = (User) userService.loadUserByUsername(user.getUsername());
+        return new RootResponse("User successfully registered.", addedUser);
+    }
+
+    @GetMapping(SIGN_UP_URL)
+    public RootResponse getUser(@RequestParam("username") String username) {
+        return new RootResponse("User", userService.loadUserByUsername(username));
     }
 
     /********** GET USER ACCOUNT & CURRENCY PAIR DATA FOR EXCHANGES **********/
@@ -87,9 +134,12 @@ public class RootController {
                 .keySet()
                 .stream()
                 .filter(cp -> {
-                    if (base != null && counter == null) return cp.base.getCurrencyCode().equals(base);
-                    else if (base == null && counter != null) return cp.counter.getCurrencyCode().equals(counter);
-                    else return true; // Returns true by default if both or neither a base & counter are specified -- no use for both.
+                    if (base != null && counter == null)
+                        return cp.base.getCurrencyCode().equals(base);
+                    else if (base == null && counter != null)
+                        return cp.counter.getCurrencyCode().equals(counter);
+                    else
+                        return true; // Returns true by default if both or neither a base & counter are specified -- no use for both.
                 })
                 .map(cp -> cp.toString())
                 .collect(Collectors.toList());
