@@ -1,10 +1,10 @@
 # Komodo Crypto
 
-Komodo Crypto is an automated cryptocurrency trading application that makes trades when a profitable arbitrage opportunity is detected between exchanges, and its functionality is accessed via HTTP endpoints. Komodo employs Knowm's excellent [XChange](https://github.com/knowm/XChange) library to interact with the exchanges, retrieving ticker data, user account information, and making the trades themselves.
+Komodo Crypto is an automated cryptocurrency trading application that makes trades when a profitable arbitrage opportunity is detected between exchanges, with its functionality accessed via HTTP endpoints. Komodo employs Knowm's excellent [XChange](https://github.com/knowm/XChange) library to interact with the exchanges, retrieving ticker data, user account information, and making the trades themselves.
   
 ## Deployment
 
-In order to run the application, you will need verified accounts, API keys and secret keys for each of the exchanges, as well as wallets for each of the currencies you want to trade on each exchange. These should all be stored in the application.properties file. Be aware that some currencies may be traded under different names on each exchange, and some wallets may require a tag in addition to an address. Please ensure that all accounts have been verified on each exchange before running the application, as verification may take some time.
+In order to run the application, the user will need verified accounts, API keys and secret keys for each of the exchanges, as well as wallets for each of the currencies you want to trade on each exchange. These should all be stored in the application.properties file. Be aware that some currencies may be traded under different names on each exchange, and some wallets may require a tag in addition to an address. Please ensure that all accounts have been verified on each exchange before running the application, as verification may take some time.
 
 The following are the current variables used to store these data in application.properties:
 
@@ -84,7 +84,7 @@ The resulting token must then be passed with every request in the Authorization 
 ```
 /api/{exchange}/currencypairs
 ```
-[GET] Gets a list of currency pairs supported by the specified exchange.
+[GET] Gets a list of currency pairs supported by the specified exchange. If base is null, returns all supported pairs with the specified counter. If counter is null, returns all supported pairs with the specified base. Otherwise, if base and counter are either both or neither included, returns all supported pairs.
 
 Request parameters (both optional):
 * base - i.e. BTC in the currency pair BTC/USD
@@ -151,3 +151,4 @@ Request parameter (required):
 * Spring Boot
 * MyBatis
 * MySQL
+
