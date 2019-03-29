@@ -1,6 +1,6 @@
 # Komodo Crypto
 
-Komodo Crypto is an automated cryptocurrency trading application that makes trades when a profitable arbitrage opportunity is detected between exchanges, with its functionality accessed via HTTP endpoints. Komodo employs Knowm's excellent [XChange](https://github.com/knowm/XChange) library to interact with the exchanges, retrieving ticker data, user account information, and making the trades themselves.
+Komodo Crypto is an automated cryptocurrency trading application that makes trades when a profitable arbitrage opportunity is detected between exchanges, and its functionalities are accessible via HTTP endpoints. Komodo employs Knowm's excellent [XChange](https://github.com/knowm/XChange) library to interact with the exchanges, retrieving ticker data and user account information, as well as executing trades.
   
 ## Deployment
 
@@ -143,7 +143,7 @@ Request parameters (required):
 Request parameter (required):
 * milliseconds - the interval after the previous execution has finished to begin the next
 
-[PUT] Stops the scanning and trading operation.
+[DELETE] Stops the scanning and trading operation. No request parameter needed
 
 ## Tech Stack
 * Java 8

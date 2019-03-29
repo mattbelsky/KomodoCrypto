@@ -197,7 +197,7 @@ public class RootController {
                 null);
     }
 
-    @PutMapping("/api/arbitrage")
+    @DeleteMapping("/api/arbitrage")
     public RootResponse stopScan() {
         threadPoolTaskScheduler.destroy();
         return new RootResponse("Scanning and trading operation stopped.", null);
