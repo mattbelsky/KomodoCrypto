@@ -30,7 +30,7 @@ public class JWTAuthorizationFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String header = httpServletRequest.getHeader(HEADER_STRING);
 
-        // If the header is null or isn't a bearer token, passes the request and response to the next filter on the chain.
+        // If the header is null or isn't a bearer token, passes the request and response to the next filter in the chain.
         if (header == null || !header.startsWith(TOKEN_PREFIX)) {
             chain.doFilter(request, response);
             return;
@@ -48,7 +48,7 @@ public class JWTAuthorizationFilter extends GenericFilterBean {
 
         String token = request.getHeader(HEADER_STRING);
         if (token != null) {
-            // parse the token.
+            // Parse the token.
             String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
                     .build()
                     .verify(token.replace(TOKEN_PREFIX, ""))

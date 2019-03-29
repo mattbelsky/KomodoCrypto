@@ -11,11 +11,7 @@ import java.util.List;
 @Mapper
 public interface CurrencyPairsMapper {
 
-    String GET_CURRENCY_PAIR_ID_BY_CURRENCY_ID = "SELECT `currency_pair_id` FROM `komodo_crypto`.`currency_pairs` " +
-            "WHERE `currency_id_1` = #{arg0} AND `currency_id_2` = #{arg1};";
-    String GET_ALL_DATA =   "SELECT * FROM `komodo_crypto`.`currency_pairs`;";
-
-    @Select(GET_ALL_DATA)
+    @Select("SELECT * FROM `komodo_crypto`.`currency_pairs`;")
     @Results(value = {
             @Result(property = "id", column = "id"),
             @Result(property = "currencyIdBase", column = "currency_id_1"),
@@ -25,7 +21,8 @@ public interface CurrencyPairsMapper {
     })
     public List<CurrencyPairs> getAllCurrencyPairs();
 
-    @Select(GET_CURRENCY_PAIR_ID_BY_CURRENCY_ID)
+    @Select("SELECT `currency_pair_id` FROM `komodo_crypto`.`currency_pairs` " +
+            "WHERE `currency_id_1` = #{arg0} AND `currency_id_2` = #{arg1};")
     public int getCurrencyPairId(int idFrom, int idTo);
     
 }

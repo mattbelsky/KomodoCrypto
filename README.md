@@ -1,81 +1,153 @@
 # Komodo Crypto
 
-Komodo Crypto integrates with the following exchangeData:
-  - Binance
-  - Bitstamp
-  - Bittrex
-  - GDAX
-  - Kraken
+Komodo Crypto is an automated cryptocurrency trading application that makes trades when a profitable arbitrage opportunity is detected between exchanges, and its functionality is accessed via HTTP endpoints. Komodo employs Knowm's excellent [XChange](https://github.com/knowm/XChange) library to interact with the exchanges, retrieving ticker data, user account information, and making the trades themselves.
   
 ## Deployment
 
-### API Keys
+In order to run the application, you will need verified accounts, API keys and secret keys for each of the exchanges, as well as wallets for each of the currencies you want to trade on each exchange. These should all be stored in the application.properties file. Be aware that some currencies may be traded under different names on each exchange, and some wallets may require a tag in addition to an address. Please ensure that all accounts have been verified on each exchange before running the application, as verification may take some time.
 
-In order to run Komodo Crypto, you will need verified accounts and API keys for 
-each of our integrated exchangeData. You can enter your specific credentials into the
-`application.properties` file in the `resources` directory. Please note, it can 
-sometimes take some time to verify your account, and if you have an account with 
-coins in it be careful before running any methods that will make actual changes 
-to your account.  
-
-### Dependencies
-
-Before starting the application, you need to resolve the Binance dependency by
-running `mvn clean` from the main directory. 
-
-## Signals
-```
-/recentsignals?days={DAYS}
-```
-Pulls the most recent signals found for the given number of days
+The following are the current variables used to store these data in application.properties:
 
 ```
-/scansignals
+##----Binance----
+binance.apiKey
+binance.secretKey
+binance.wallet.btc.id
+binance.wallet.eth.id
+binance.wallet.bch.id
+binance.wallet.ltc.id
+binance.wallet.xrp.id
+binance.wallet.xrp.tag
+
+##----Bittrex----
+bittrex.username
+bittrex.apiKey
+bittrex.secretKey
+bittrex.wallet.btc.id
+bittrex.wallet.eth.id
+bittrex.wallet.bch.id
+bittrex.wallet.ltc.id
+bittrex.wallet.xrp.id
+
+##----Coinbase Pro----
+coinbasepro.apiKey
+coinbasepro.secretKey
+coinbasepro.passphrase
+coinbasepro.wallet.btc.id
+coinbasepro.wallet.eth.id
+coinbasepro.wallet.bch.id
+coinbasepro.wallet.ltc.id
+coinbasepro.wallet.usdc.id
+
+#----Kraken----
+kraken.apiKey
+kraken.privateKey
+kraken.wallet.btc.id
+kraken.wallet.eth.id
+kraken.wallet.bch.id
+kraken.wallet.ltc.id
+kraken.wallet.xrp.id
+kraken.wallet.xrp.tag
 ```
 
-Scans currency pairs Komodo Crypto is tracking and determines buy/sell signals
+More exchanges and currencies can be added as desired following this format. However, in addition to modifying application.properties, the user will need to add the exchanges to the methods formatExchangeName() and createExchange() in ExchangeService and follow the pattern within ExchangesConfig to add the relevant fields and methods.
 
-Current signals include:
-* Simple Trend (current price related to 50 Day Simple Moving Average)
-* Golden Cross / Death Cross
-* Cross of Moving Average Convergence Divergence (MACD)
+## Security
 
+The API is secured with JSON web tokens. To obtain a token, a registered user must pass their credentials as a JSON object in the body of a POST request at the `/login` endpoint:
+```
+{
+	"username": "<username>",
+	"password": "<password>"
+}
+```
+The resulting token must then be passed with every request in the Authorization header.
 
-## Indicators
+## Endpoints
+
+### Users
 
 ```
-/dailyindicator?type={INDICATOR}&fromcurrency={BASE_CURRENCY}&tocurrency={COUNTER_CURRENCY}&trailing={DAYS}
+/user
+```
+[POST] Registers a new user. Username, password, and email must be included in the request body as JSON in the following form:
+```
+{
+	"username": "<usename>",
+	"password": "<password>",
+	"email": "<email>"
+}
 ```
 
-An indicator can be the following:
-* SMA - Simple Moving Average
-* EMA - Exponential Moving Average
-
-The trailing days must be between one and the historical daily data available.
-
-## MVC Security
-The Komodo MVC is secured with Basic Auth. You must register and obtain a valid username
-and password before you can use this application.
-
-## API Security
-The Komodo API is secured with OAuth2 Client Credentials Grants. To access secure endpoints you need to exchangeData your client
-credentials for an access token.
-
-You can register client credentials by making a POST request to the Authorization Server with your email as the
-client_id and a client_secret of your choosing.
+### Exchanges: User Account and Supported Currency Data
 
 ```
-curl -X POST -H 'Content-Type: application/json' -d '{"client_id": "YOUR_EMAIL_HERE", "client_secret": "YOUR_SECRET_HERE", "authorized_grant_types":"client_credentials"}' http://localhost:8080/oauth/client
+/api/{exchange}/currencypairs
 ```
+[GET] Gets a list of currency pairs supported by the specified exchange.
 
-In order to obtain an access token
-you should make a POST request to the Authorization Server with your client credentials.
-```
-curl -X POST --user 'YOUR_EMAIL_HERE:YOUR_SECRET_HERE' -d 'grant_type=client_credentials' http://localhost:8080/oauth/token
-```
+Request parameters (both optional):
+* base - i.e. BTC in the currency pair BTC/USD
+* counter - i.e. USD in the pair BTC/USD
 
-This will return an access token that will expire after the allotted time has passed.
-You can make a request to any endpoint using the access token in the authorization header.
 ```
-curl -X GET -H "Authorization: Bearer ACCESS_TOKEN_HERE" http://localhost:8080/test-security
+/api/{exchange}/account
 ```
+[GET] Gets the user's account information for the specified exchange -- trading fees, wallet data, etc.
+
+```
+/api/{exchange}/wallet
+```
+[GET] Gets the wallet balance for the specified exchange and currency.
+
+Request parameter (required):
+* currency - i.e. BTC
+
+```
+/api/{exchange}/wallet/address
+```
+[GET] Gets the wallet address for the specified exchange and currency. Generally used for testing purposes.
+
+Request parameter (required):
+* currency
+
+### Make Trades and Withdraw Currency
+
+```
+/api/{exchange}/trade/market
+```
+[POST] Makes market trades of the specified amount and base and counter currency on the specified exchange.
+
+Request parameters (required):
+* base
+* counter
+* amount
+
+```
+/api/{exchange}/withdraw
+```
+[POST] Withdraws the specified amount of currency from the wallet of one exchange to that of another.
+
+Request parameters (required):
+* toexchange - the exchange to withdraw to
+* currency
+* amount
+
+### Scan for and Trade Arbitrage Opportunities
+
+```
+/api/arbitrage
+```
+[POST] Detects and trades on arbitrage opportunities on a fixed delay.
+
+Request parameter (required):
+* milliseconds - the interval after the previous execution has finished to begin the next
+
+[PUT] Stops the scanning and trading operation.
+
+## Tech Stack
+* Java 8
+* Maven
+* Spring Boot
+* MyBatis
+* MySQL

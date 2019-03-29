@@ -1,6 +1,9 @@
 package komodocrypto.controllers;
 
 import komodocrypto.exceptions.custom_exceptions.InsufficientFundsException;
+import komodocrypto.model.account.AccountInfoDTO;
+import komodocrypto.model.account.BalanceDTO;
+import komodocrypto.model.account.WalletDTO;
 import komodocrypto.model.arbitrage.ArbitrageModel;
 import komodocrypto.model.user.User;
 import komodocrypto.services.arbitrage.ArbitrageScanningService;
@@ -53,11 +56,6 @@ public class RootController {
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
-    @GetMapping("/admin")
-    public void admin() {
-        System.out.println("Hello admin!");
-    }
-
     /********** CREATE/REMOVE USER & MODIFY USER SETTINGS **********/
 
     @PostMapping(SIGN_UP_URL)
@@ -99,29 +97,6 @@ public class RootController {
 
     /********** GET USER ACCOUNT & CURRENCY PAIR DATA FOR EXCHANGES **********/
 
-    @GetMapping("/api/{exchange}/account")
-    public RootResponse getAccountInfo(@PathVariable("exchange") String exchangeName) throws IOException {
-
-        Exchange exchange = exchangeService.createExchange(exchangeName);
-        AccountInfoDTO accountInfoDTO = getAccountInfoDTO(exchange);
-        return new RootResponse("Account info for exchange " + exchangeName + ".", accountInfoDTO);
-    }
-
-    @GetMapping("/api/{exchange}/wallet")
-    public BigDecimal getWalletBalance(@PathVariable("exchange") String exchangeName,
-                                       @RequestParam("currency") String currencyName) throws IOException {
-
-        Exchange exchange = exchangeService.createExchange(exchangeName);
-        Currency currency = new Currency(currencyName);
-        BigDecimal balance = exchange
-                .getAccountService()
-                .getAccountInfo()
-                .getWallet() // The id for the exchange "wallet," which holds all balances, NOT exchange's currency wallet address
-                .getBalance(currency)
-                .getAvailable();
-        return balance;
-    }
-
     @GetMapping("/api/{exchange}/currencypairs")
     public RootResponse getSupportedCurrencyPairs(@PathVariable("exchange") String exchangeName,
                                                   @RequestParam(value = "base", required = false) String base,
@@ -146,13 +121,36 @@ public class RootController {
         return new RootResponse("Currency pairs supported for exchange " + exchangeName + ".", currencyPair);
     }
 
-    @PostMapping("/api/{exchange}/wallet")
-    public String getWalletId(@PathVariable("exchange") String exchangeName,
+    @GetMapping("/api/{exchange}/account")
+    public RootResponse getAccountInfo(@PathVariable("exchange") String exchangeName) throws IOException {
+
+        Exchange exchange = exchangeService.createExchange(exchangeName);
+        AccountInfoDTO accountInfoDTO = getAccountInfoDTO(exchange);
+        return new RootResponse("Account info for exchange " + exchangeName + ".", accountInfoDTO);
+    }
+
+    @GetMapping("/api/{exchange}/wallet")
+    public BigDecimal getWalletBalance(@PathVariable("exchange") String exchangeName,
+                                       @RequestParam("currency") String currencyName) throws IOException {
+
+        Exchange exchange = exchangeService.createExchange(exchangeName);
+        Currency currency = new Currency(currencyName);
+        BigDecimal balance = exchange
+                .getAccountService()
+                .getAccountInfo()
+                .getWallet() // The id for the exchange "wallet," which holds all balances, NOT exchange's currency wallet address
+                .getBalance(currency)
+                .getAvailable();
+        return balance;
+    }
+
+    @GetMapping("/api/{exchange}/wallet/address")
+    public String getWalletAddress(@PathVariable("exchange") String exchangeName,
                               @RequestParam("currency") String currency) {
 
-        String walletId = exchangeService.buildGetWalletAddrMethodName(exchangeName, currency);
-        System.out.println(walletId);
-        return walletId;
+        String walletAddress = exchangeService.buildGetWalletAddrMethodName(exchangeName, currency);
+        System.out.println(walletAddress);
+        return walletAddress;
     }
 
     /********** MAKE TRADES **********/
@@ -216,12 +214,23 @@ public class RootController {
 
         @Override
         public void run() {
+
             List<Exchange> exchanges = exchangeService.generateExchangesList();
             try {
                 List<ArbitrageModel> arbitrageOpportunities = arbitrageScanningService.getPossibleArbitrageOpportunities(exchanges);
                 ArbitrageModel best = arbitrageScanningService.getBestArbitrageOpportunity(arbitrageOpportunities);
+
+                // Sets the amount to trade as the entire balance of the selling wallet.
+                BigDecimal amount = getWalletBalance(
+                        best.getHighBidExchange().getExchangeSpecification().getExchangeName(),
+                        best.getCurrencyPair().base.getCurrencyCode()
+                );
+                best.setAmount(amount);
+
+                // Builds the market orders and executes the trades.
                 MarketOrder[] marketOrders = arbitrageTradeService.buildArbitrageMarketOrders(best);
                 arbitrageTradeService.makeArbitrageMarketTrades(best, marketOrders);
+
             } catch (IOException e) {
                 // Nothing.
             } catch (InsufficientFundsException e) {

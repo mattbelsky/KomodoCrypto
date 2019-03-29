@@ -11,7 +11,7 @@ import java.util.List;
 public interface ExchangeMapper {
 
     @Select("SELECT * FROM `komodo_crypto`.`exchanges`;")
-    @Results(id = "ExchangeResultMap", value = {
+    @Results(id = "exchangeResultMap", value = {
             @Result(property = "exchangeName", column = "exchange_name"),
             @Result(property = "takerTradeFee", column = "taker_trade_fee"),
             @Result(property = "makerTradeFee", column = "maker_trade_fee")
@@ -25,14 +25,14 @@ public interface ExchangeMapper {
     public int getExchangeIdByName(String exchangeName);
 
     @Select("SELECT * FROM `komodo_crypto`.`exchanges` WHERE `exchange_name` = #{exchangeName};")
-    @ResultMap("ExchangeResultMap")
+    @ResultMap("exchangeResultMap")
     public ExchangeModel getExchangeModelByName(String exchangeName);
 
     @Select("SELECT * FROM `komodo_crypto`.`exchange_inout_limits` limits " +
             "WHERE limits.`exchange_id` = " +
             "(SELECT `id` FROM `komodo_crypto`.`exchanges` WHERE `exchange_name` = #{arg0} LIMIT 1) " +
             "AND limits.`currency` = #{arg1};")
-    @Results(id = "ExchangeInOutLimitsResultMap", value = {
+    @Results(id = "exchangeInOutLimitsResultMap", value = {
             @Result(property = "depositMin", column = "deposit_min"),
             @Result(property = "withdrawalMin", column = "withdrawal_min"),
             @Result(property = "withdrawalMax", column = "withdrawal_max"),
