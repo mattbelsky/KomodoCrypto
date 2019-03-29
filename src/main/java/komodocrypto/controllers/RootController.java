@@ -90,11 +90,6 @@ public class RootController {
         return new RootResponse("User successfully registered.", addedUser);
     }
 
-    @GetMapping(SIGN_UP_URL)
-    public RootResponse getUser(@RequestParam("username") String username) {
-        return new RootResponse("User", userService.loadUserByUsername(username));
-    }
-
     /********** GET USER ACCOUNT & CURRENCY PAIR DATA FOR EXCHANGES **********/
 
     @GetMapping("/api/{exchange}/currencypairs")
