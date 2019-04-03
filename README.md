@@ -9,7 +9,7 @@ In order to run the application, the user will need verified accounts, API keys 
 The following are the current variables used to store these data in application.properties:
 
 ```
-##----Binance----
+#----Binance----
 binance.apiKey
 binance.secretKey
 binance.wallet.btc.id
@@ -19,7 +19,7 @@ binance.wallet.ltc.id
 binance.wallet.xrp.id
 binance.wallet.xrp.tag
 
-##----Bittrex----
+#----Bittrex----
 bittrex.username
 bittrex.apiKey
 bittrex.secretKey
@@ -29,7 +29,7 @@ bittrex.wallet.bch.id
 bittrex.wallet.ltc.id
 bittrex.wallet.xrp.id
 
-##----Coinbase Pro----
+#----Coinbase Pro----
 coinbasepro.apiKey
 coinbasepro.secretKey
 coinbasepro.passphrase
@@ -50,7 +50,7 @@ kraken.wallet.xrp.id
 kraken.wallet.xrp.tag
 ```
 
-More exchanges and currencies can be added as desired following this format. However, in addition to modifying application.properties, the user will need to add the exchanges to the methods formatExchangeName() and createExchange() in ExchangeService and follow the pattern within ExchangesConfig to add the relevant fields and methods.
+More exchanges and currencies can be added as desired following this format. However, in addition to modifying application.properties, the user will need to add the exchanges to the methods formatExchangeName() and createExchange() in ExchangeService and follow the pattern within ExchangesUtil to add the relevant fields and methods.
 
 ## Security
 
@@ -64,6 +64,8 @@ The API is secured with JSON web tokens. To obtain a token, a registered user mu
 The resulting token must then be passed with every request in the Authorization header.
 
 ## Endpoints
+
+Note: Many endpoints contain the path variable `{exchange}`. Simply replace this with the name of the exchange desired, case irrelevant.
 
 ### Users
 
