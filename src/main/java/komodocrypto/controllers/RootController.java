@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -59,7 +60,7 @@ public class RootController {
     /********** CREATE/REMOVE USER & MODIFY USER SETTINGS **********/
 
     @PostMapping(SIGN_UP_URL)
-    public RootResponse createUser(@RequestBody User user) {
+    public RootResponse createUser(@RequestBody User user, HttpServletRequest httpServletRequest) {
 
         boolean userIsUnique = userService.usernameIsUnique(user);
         StringBuilder messageBuilder = new StringBuilder();
@@ -79,6 +80,10 @@ public class RootController {
             String message = messageBuilder.toString();
             return new RootResponse(message, null);
         }
+
+        // Gets the user's IP address and adds it to the user object.
+        String ipAddress = httpServletRequest.getRemoteAddr();
+        user.setIpAddress(ipAddress);
 
         try {
             userService.addUser(user);

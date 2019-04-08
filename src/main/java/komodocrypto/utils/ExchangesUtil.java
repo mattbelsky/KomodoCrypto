@@ -110,15 +110,6 @@ public class ExchangesUtil {
     @Value("${kraken.wallet.xrp.tag}")
     private String krakenXRPWalletTag;
 
-    //------BLOCKCHAIN WALLET------//
-
-    @Value("${blockchainwallet.btc.id}")
-    private String blockchainWalletBTCId;
-
-    //------CRYPTOCOMPARE API------//
-    @Value("${cryptocompare.apiKey}")
-    private String cryptocompareAPIKey;
-
     // Getters
 
     public String getBinanceApiKey() {
@@ -247,13 +238,5 @@ public class ExchangesUtil {
 
     public String getKrakenXRPWalletTag() {
         return krakenXRPWalletTag;
-    }
-
-    public String getBlockchainWalletBTCId() {
-        return blockchainWalletBTCId;
-    }
-
-    public String getCryptocompareAPIKey() {
-        return cryptocompareAPIKey;
     }
 }
